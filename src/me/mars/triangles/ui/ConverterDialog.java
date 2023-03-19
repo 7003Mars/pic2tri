@@ -111,6 +111,7 @@ public class ConverterDialog extends BaseDialog {
 	}
 
 	public void updateScales() {
+		if (this.currentLoaded == null) return;
 		// Note: This indirectly calls updateSize too
 		Seq<Float> snaps = new Seq<>();
 		int snapSize = this.lDisplay.displaySize;
@@ -120,6 +121,7 @@ public class ConverterDialog extends BaseDialog {
 			snapSize+= this.lDisplay.displaySize;
 		}
 		snaps.sort(f -> f);
+		this.xChunks = this.yChunks = 0;
 		this.configs.scaleSlider.setValues(snaps);
 	}
 
