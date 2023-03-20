@@ -9,4 +9,13 @@ public class ScanLine {
 		this.x1 = x1;
 		this.x2 = x2;
 	}
+
+	@Override
+	public String toString() {
+		return "ScanLine{" +
+				"y=" + y +
+				", x1=" + x1 +
+				", x2=" + x2 +
+				'}';
+	}
 }

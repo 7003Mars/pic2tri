@@ -151,14 +151,14 @@ public class Triangle extends Shape{
 	/**
 	 * Fills a flat top triangle with y2=y3, y1 < y2 < y3
 	 */
-	private static void fillTopFlat(MutateMap pixmap, int x1, int y1, int x2, int y2, int x3, int y3, boolean skipBase) {
+	private static void fillTopFlat(MutateMap pixmap, int x1, int y1, int x2, int y2, int x3, int y3, boolean skipTop) {
 		float invSlope1 = (x1 - x2) / (float)(y1 - y2);
 		float invSlope2 = (x1 - x3) / (float)(y1 - y3);
 		if (Float.isInfinite(invSlope1) || Float.isInfinite(invSlope2)) {
 			throw new ArithmeticException("Stinky");
 		}
 		float curX1 = x1, curX2 = x1;
-		if (skipBase) y1++;
+		if (skipTop) y3--;
 		for (int scanY = y1; scanY <= y3; scanY++) {
 			pixmap.mark(new ScanLine((int)curX1,(int) curX2, scanY));
 			curX1+=invSlope1;
