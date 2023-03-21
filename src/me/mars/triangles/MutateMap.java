@@ -5,18 +5,12 @@ import arc.graphics.Pixmap;
 import arc.math.Mathf;
 import arc.struct.Seq;
 import arc.struct.Sort;
+import arc.util.ArcRuntimeException;
+import arc.util.Log;
 import me.mars.triangles.shapes.ScanLine;
 
 public class MutateMap extends Pixmap {
-	/**
-	 * Score is squared
-	 */
-
 	public final Pixmap origin;
-	/**
-	 * For obtaining color.
-	 * The squared sum of each color
-	 */
 	private Seq<ScanLine> marks = new Seq<>();
 	public Sort sort = new Sort();
 
@@ -130,6 +124,7 @@ public class MutateMap extends Pixmap {
 			scanLine.x1 = scanLine.x2;
 			scanLine.x2 = tmp;
 		}
+		if (marks.contains(l -> l.y == scanLine.y)) Log.warn("@ already there? For line @", scanLine.y, scanLine);
 		marks.add(scanLine);
 	}
 

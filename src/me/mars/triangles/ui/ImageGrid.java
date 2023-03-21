@@ -17,6 +17,7 @@ import arc.util.Log;
 import arc.util.Nullable;
 import arc.util.Strings;
 import arc.util.pooling.Pools;
+import me.mars.triangles.PicToTri;
 import me.mars.triangles.SchemBuilder;
 import mindustry.Vars;
 import mindustry.ui.Fonts;
@@ -118,11 +119,9 @@ public class ImageGrid extends Element {
 		float scaledSize = scaled(this.zoom);
 		float ox = this.x+this.width/2f + this.panX*scaledSize/2f;
 		float oy = this.y+this.height/2f + this.panY*scaledSize/2f;
-		// pad = logic range * scaled size
-		// ox <-> (scaledSize * builder width)
 
 		Lines.rect(ox, oy, scaledSize * dialog.filler.width, scaledSize * dialog.filler.height);
-		Fill.rect(this.panX + this.width/2f, this.panY + this.width/2f, scaledSize, scaledSize);
+		if (PicToTri.debugMode) Fill.rect(this.panX + this.width/2f, this.panY + this.width/2f, scaledSize, scaledSize);
 		// Drawing logic block positions
 		for (SchemBuilder.Display display : dialog.filler.displays) {
 			Draw.color(display.color);
@@ -168,9 +167,9 @@ public class ImageGrid extends Element {
 		GlyphLayout layout = Pools.obtain(GlyphLayout.class, GlyphLayout::new);
 		layout.setText(font, builder.toString());
 		Draw.color(0, 0, 0, 0.5f);
-		Fill.rect(this.x + layout.width/2f, this.y + layout.height/2f, layout.width, layout.height);
+		Fill.rect(this.x + layout.width/2f, this.y + layout.height, layout.width, layout.height);
 		Draw.color();
-		font.draw(layout, this.x, this.y + layout.height/2f);
+		font.draw(layout, this.x, this.y + layout.height);
 		Pools.free(layout);
 	}
 

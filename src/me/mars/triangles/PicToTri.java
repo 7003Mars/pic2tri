@@ -33,8 +33,8 @@ public class PicToTri extends Mod {
 		Vars.ui.schematics.buttons.button(bundle("convert"), converterDialog::show);
 
 		Events.on(EventType.ClientLoadEvent.class, clientLoadEvent -> {
-			converterDialog.show();
 			debugMode = Core.settings.getBool(setting("debug-mode"));
+			if (debugMode) converterDialog.show();
 		});
 	}
 

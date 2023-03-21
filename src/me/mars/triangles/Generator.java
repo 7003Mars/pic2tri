@@ -55,7 +55,6 @@ public class Generator implements Callable<Seq<Shape>> {
 			Fi tempFile = Fi.tempFile(Integer.toHexString(this.hashCode()));
 			tempFile.writePng(image);
 			this.loadPath = tempFile;
-//			Log.info("Temp store @", tempFile.path());
 			image.dispose();
 		} else {
 			this.original = image;
@@ -80,6 +79,7 @@ public class Generator implements Callable<Seq<Shape>> {
 		b = Mathf.round((float)b/size);
 		this.mutated.fill(Color.packRgba(r, g, b, 255));
 		history.add(new FillShape(r, g, b));
+		this.curRaw = this.mutated.fullDiff();
 		this.generation.getAndIncrement();
 	}
 
@@ -102,12 +102,15 @@ public class Generator implements Callable<Seq<Shape>> {
 			Shape shape = this.getBestShape();
 			long best = this.hillClimb(shape);
 			if (best == 0) {
-//				Log.warn("No good shape found, skipping: @ ", best);
+				Log.warn("No good shape found, skipping");
 				continue;
 			}
 			shape.fill(this.mutated);
 			mutated.apply(Color.packRgba(shape.r, shape.g, shape.b, shape.a));
 			long newRaw = this.mutated.fullDiff();
+			if (PicToTri.debugMode && this.curRaw-newRaw != best) {
+				Log.warn("Off: @ @", curRaw-newRaw, best);
+			}
 			if (newRaw > this.curRaw) {
 				Log.warn("Produced worse image from improvement @: @", best, newRaw-this.curRaw);
 			}
@@ -218,7 +221,7 @@ public class Generator implements Callable<Seq<Shape>> {
 	}
 
 	public synchronized float acc() {
-		if (this.state != GenState.Start) return 0f;
+		if (this.state == GenState.Ready) return 0f;
 		return 1f - Mathf.sqrt((float) this.curRaw / (this.mutated.width * this.mutated.height * 4))/255f;
 	}
 

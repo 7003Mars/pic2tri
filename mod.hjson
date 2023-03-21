@@ -1,5 +1,5 @@
 #the mod name as displayed in-game
-displayName: "Java Mod Template"
+displayName: "PicToTri"
 
 #the internal name of your mod
 name: "triangles"
@@ -11,7 +11,7 @@ author: "Mars#7003"
 main: "me.mars.triangles.PicToTri"
 
 #the mod description as seen in the mod dialog
-description: "A Mindustry Java mod template."
+description: "I love triangles!!1!11"
 
 #the mod version
 version: 1.0

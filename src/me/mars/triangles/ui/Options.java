@@ -10,7 +10,7 @@ import me.mars.triangles.SchemBuilder;
 public class Options extends Table {
 	ConverterDialog dialog;
 
-	private boolean stopEvent = false;
+	private boolean suppress = false;
 
 	Slider acc = new Slider(0, 0.99f, 0.001f, false);
 	Slider procs = new Slider(0, 0, 1f, false);
@@ -20,7 +20,7 @@ public class Options extends Table {
 		this.addCaptureListener(new ChangeListener() {
 			@Override
 			public void changed(ChangeEvent event, Element actor) {
-				if (stopEvent && (actor == Options.this.acc || actor == Options.this.procs)) {
+				if (suppress && (actor == Options.this.acc || actor == Options.this.procs)) {
 					event.stop();
 				}
 			}
@@ -31,7 +31,6 @@ public class Options extends Table {
 		this.acc.changed(() -> {
 			if (dialog.selectedOpt == null) return;
 			dialog.selectedOpt.targetAcc = acc.getValue();
-			dialog.updateSize();
 		});
 		this.add(acc);
 		this.row();
@@ -39,11 +38,10 @@ public class Options extends Table {
 		this.row();
 		this.procs.changed(() -> {
 			if (dialog.selectedOpt == null) return;
-			this.stopEvent = true;
+			this.suppress = true;
 			SchemBuilder.Display selected = (SchemBuilder.Display) dialog.selectedOpt;
 			this.procs.setValue(selected.getProcs((int) this.procs.getValue()));
-			this.stopEvent = false;
-			dialog.updateSize();
+			this.suppress = false;
 		});
 //		this.procs.keyDown(keyCode -> {
 //			int curVal = (int) this.procs.getValue();
@@ -58,7 +56,7 @@ public class Options extends Table {
 
 	public void updateFields() {
 		// TODO: Get free space from Fill
-		this.stopEvent = true;
+		this.suppress = true;
 		if (dialog.selectedOpt == null) {
 			this.procs.setRange(0f, 0f);
 		} else {
@@ -67,6 +65,6 @@ public class Options extends Table {
 			this.procs.setValue(selected.points.size);
 			this.acc.setValue(this.dialog.selectedOpt.targetAcc);
 		}
-		this.stopEvent = false;
+		this.suppress = false;
 	}
 }
