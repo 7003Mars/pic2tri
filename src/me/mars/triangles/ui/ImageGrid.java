@@ -117,11 +117,20 @@ public class ImageGrid extends Element {
 		// Pre-drawing stuff
 		if (this.region == null || !this.clipBegin()) return;
 		float scaledSize = scaled(this.zoom);
-		float ox = this.x+this.width/2f + this.panX*scaledSize/2f;
-		float oy = this.y+this.height/2f + this.panY*scaledSize/2f;
+		float ox = this.x + this.width/2f + this.panX*scaledSize/2f;
+		float oy = this.y + this.height/2f + this.panY*scaledSize/2f;
 
 		Lines.rect(ox, oy, scaledSize * dialog.filler.width, scaledSize * dialog.filler.height);
-		if (PicToTri.debugMode) Fill.rect(this.panX + this.width/2f, this.panY + this.width/2f, scaledSize, scaledSize);
+		if (PicToTri.debugMode) {
+			Fill.rect(this.panX + this.width/2f, this.panY + this.width/2f, scaledSize, scaledSize);
+			Draw.color(Color.yellow);
+			for (int x = 0; x < dialog.filler.width; x++) {
+				for (int y = 0; y < dialog.filler.height; y++) {
+					if (dialog.filler.occupied(x, y)) Fill.crect(ox + x*scaledSize, oy + y*scaledSize, scaledSize, scaledSize);
+				}
+			}
+			Draw.color();
+		}
 		// Drawing logic block positions
 		for (SchemBuilder.Display display : dialog.filler.displays) {
 			Draw.color(display.color);
@@ -134,8 +143,8 @@ public class ImageGrid extends Element {
 		}
 		Draw.color();
 		// Draw the image
-		int displayRes = (int) (dialog.lDisplay.size * scaledSize);
-		int drawPad = (int) (dialog.lBlock.range / Vars.tilesize * scaledSize);
+		float displayRes = (int) (dialog.lDisplay.size * scaledSize);
+		float drawPad = (int) (dialog.lBlock.range / Vars.tilesize * scaledSize);
 		float maxWidth = dialog.xChunks * displayRes;
 		float maxHeight = dialog.yChunks * displayRes;
 		float scl = Math.min(maxWidth / this.region.width, maxHeight / this.region.height);
