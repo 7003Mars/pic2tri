@@ -70,9 +70,13 @@ public class SchemBuilder {
 			Display display = new Display((i % xChunks) * dispSize + offset, i/xChunks * dispSize + offset);
 			this.displays.add(display);
 		}
-		int midX = this.width/2, midY = this.height/2;
+		float midX = (this.width+1) /2f, midY = (this.height+1) /2f;
 		this.displays.copy().sort(display -> Mathf.dst2(display.x, display.y, midX, midY))
-				.each(display -> display.obtain(1));
+				.each(display -> {
+//					 REMOVEME: Remove log
+//					Log.info("O @", display);
+					display.obtain(1);
+				});
 	}
 
 	public Display getDisplay(int cx, int cy) {
@@ -115,7 +119,7 @@ public class SchemBuilder {
 			int dir = 0;
 			int x = this.x, y = this.y;
 			int segLen = 0, maxSegLen = 1;
-			int range2 = SchemBuilder.this.procRange + SchemBuilder.this.dispSize*2;
+			int range2 = SchemBuilder.this.procRange*2 + SchemBuilder.this.dispSize;
 			range2 *= range2;
 			for (int i = 0; i < range2; i++) {
 				if (this.points.size >= target) return target;
@@ -134,6 +138,9 @@ public class SchemBuilder {
 				}
 			}
 			Log.warn("@ only obtained @ processors", this, this.points.size);
+//			Log.info("Last was @, @ Origin @ @", x, y,
+//					this.x + (float)(SchemBuilder.this.dispSize - 1)/2,
+//					this.y + (float)(SchemBuilder.this.dispSize - 1)/2);
 			return this.points.size;
 		}
 
@@ -153,9 +160,11 @@ public class SchemBuilder {
 		}
 
 		public boolean within(int x, int y) {
-			float cx = (this.x - (float)(SchemBuilder.this.dispSize - 1)/2) + SchemBuilder.this.dispSize/2f;
-			float cy = (this.y - (float)(SchemBuilder.this.dispSize - 1)/2) + SchemBuilder.this.dispSize/2f;
-			int range2 = SchemBuilder.this.procRange * SchemBuilder.this.procRange;
+			float cx = this.x + ((SchemBuilder.this.dispSize + 1) %2) /2f;
+			float cy = this.y + ((SchemBuilder.this.dispSize + 1) %2) /2f;
+
+			float range2 = SchemBuilder.this.procRange + SchemBuilder.this.dispSize/2f;
+			range2*= range2;
 			return Mathf.dst2(cx, cy, x, y) < range2;
 		}
 
