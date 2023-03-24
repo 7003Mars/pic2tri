@@ -13,7 +13,6 @@ import arc.scene.Element;
 import arc.scene.event.ClickListener;
 import arc.scene.event.InputEvent;
 import arc.scene.ui.layout.Scl;
-import arc.util.Log;
 import arc.util.Nullable;
 import arc.util.Strings;
 import arc.util.pooling.Pools;
@@ -119,7 +118,7 @@ public class ImageGrid extends Element {
 		float scaledSize = scaled(this.zoom);
 		float ox = this.x + this.width/2f + this.panX*scaledSize/2f;
 		float oy = this.y + this.height/2f + this.panY*scaledSize/2f;
-
+		// Border for whole schematic
 		Lines.rect(ox, oy, scaledSize * dialog.filler.width, scaledSize * dialog.filler.height);
 		if (PicToTri.debugMode) {
 			Fill.rect(this.panX + this.width/2f, this.panY + this.width/2f, scaledSize, scaledSize);
@@ -143,13 +142,14 @@ public class ImageGrid extends Element {
 		}
 		Draw.color();
 		// Draw the image
-		float displayRes = (int) (dialog.lDisplay.size * scaledSize);
-		float drawPad = (int) (dialog.lBlock.range / Vars.tilesize * scaledSize);
+		float displayRes = dialog.lDisplay.size * scaledSize;
+		float drawPad = dialog.lBlock.range / Vars.tilesize * scaledSize;
 		float maxWidth = dialog.xChunks * displayRes;
 		float maxHeight = dialog.yChunks * displayRes;
 		float scl = Math.min(maxWidth / this.region.width, maxHeight / this.region.height);
 		float iw = this.region.width * scl, ih = this.region.height * scl;
 		Draw.rect(this.region, drawPad + ox + iw/2f, drawPad + oy + ih/2f, iw, ih);
+		// Draw display positions
 		Lines.stroke(1f);
 		for (int x = 0; x < dialog.xChunks; x++) {
 			for (int y = 0; y < dialog.yChunks; y++) {
