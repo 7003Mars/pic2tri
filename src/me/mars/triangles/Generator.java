@@ -102,7 +102,7 @@ public class Generator implements Callable<Seq<Shape>> {
 			Shape shape = this.getBestShape();
 			long best = this.hillClimb(shape);
 			if (best == 0) {
-				Log.warn("No good shape found, skipping");
+//				Log.warn("No good shape found, skipping");
 				continue;
 			}
 			shape.fill(this.mutated);
@@ -237,6 +237,6 @@ public class Generator implements Callable<Seq<Shape>> {
 	}
 
 	public enum GenState {
-		Ready, Start, Done;
+		Ready, Start, Done
 	}
 }
