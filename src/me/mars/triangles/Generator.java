@@ -26,7 +26,7 @@ public class Generator implements Callable<Seq<Shape>> {
 
 	public final int alpha;
 	private GenState state = GenState.Ready;
-	private WindowedMean timings = new WindowedMean(100);
+	private WindowedMean timings = new WindowedMean(40);
 
 	public AtomicInteger generation = new AtomicInteger();
 	public volatile int maxGen;

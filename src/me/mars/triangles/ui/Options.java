@@ -5,6 +5,7 @@ import arc.scene.event.ChangeListener;
 import arc.scene.ui.Slider;
 import arc.scene.ui.layout.Table;
 import arc.util.Strings;
+import me.mars.triangles.PicToTri;
 import me.mars.triangles.SchemBuilder;
 
 public class Options extends Table {
@@ -34,7 +35,8 @@ public class Options extends Table {
 		});
 		this.add(acc);
 		this.row();
-		this.label(() -> "Max shapes: " + (int)this.procs.getValue() * SchemBuilder.Max_Shapes);
+		this.label(() -> dialog.selectedOpt == null ? PicToTri.bundle("select-display") :
+				"Max shapes: " + dialog.selectedOpt.maxGen);
 		this.row();
 		this.procs.changed(() -> {
 			if (dialog.selectedOpt == null) return;

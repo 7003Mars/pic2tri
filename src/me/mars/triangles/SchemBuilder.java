@@ -35,14 +35,23 @@ public class SchemBuilder {
 			control enabled display1 0 0 0 0
 			jump 1 always 0 0
 			""";
+
+	static final String codeStartSingle = """
+			sensor e display1 @enabled
+			jump 0 equal e 1
+			control enabled display1 1 0 0 0
+			""";
+
 	public static final int Max_Shapes;
+	public static final int Max_Shapes_Single;
 	static {
 		int freeInstructions = LExecutor.maxInstructions - (Strings.count(codeStart, "\n") + Strings.count(codeEnd, "\n"));
 		// Account for draw flushes
 		freeInstructions-= Mathf.ceilPositive(freeInstructions/256f);
 		Max_Shapes = freeInstructions/2;
-		// REMOVEME
-//		Max_Shapes = 10;
+		freeInstructions = LExecutor.maxInstructions - Strings.count(codeStartSingle, "\n");
+		freeInstructions-= Mathf.ceilPositive(freeInstructions/256f);
+		Max_Shapes_Single = freeInstructions/2;
 	}
 
 	public Seq<Display> displays;
@@ -110,7 +119,7 @@ public class SchemBuilder {
 		public Color color = Color.HSVtoRGB(Mathf.random(360), 100, 100);
 
 		public Display(int x, int y) {
-			super(175, SchemBuilder.Max_Shapes -1);
+			super(175, SchemBuilder.Max_Shapes_Single);
 			this.x = x;
 			this.y = y;
 		}
@@ -155,7 +164,7 @@ public class SchemBuilder {
 
 		public int getProcs(int target) {
 			int obtained = target > this.points.size ? this.obtain(target) : this.free(target);
-			this.maxGen = obtained * Max_Shapes;
+			this.maxGen = obtained == 1 ? Max_Shapes_Single : obtained * Max_Shapes;
 			return obtained;
 		}
 
@@ -169,32 +178,28 @@ public class SchemBuilder {
 		}
 
 		public void build(Seq<Shape> shapes, Seq<Stile> tileArray, LogicDisplay display) {
+			if (shapes.size <= Max_Shapes_Single) {
+				this.buildSingle(shapes, tileArray, display);
+				return;
+			}
 			int i = 0;
 			int usedProcs = Mathf.ceilPositive((float) shapes.size/ Max_Shapes);
 			for (int index = 0; index < this.points.size; index++) {
 				int pos = this.points.items[index];
-				int x = Point2.x(pos);
-				int y = Point2.y(pos);
 				StringBuilder builder = new StringBuilder();
 				builder.append(codeStart.replace("$", String.valueOf(index+1)));
 				int j = 0;
 				for (; j < Max_Shapes; j++) {
-					if (i+j >= shapes.size-1) break;
 					builder.append(shapes.get(i+j).toInstr());
 					if (j != 0 && j % 128 == 0) {
 						builder.append("drawflush display1\n");
 					}
+					if (i+j >= shapes.size-1) break;
 				}
 				i+= j;
-				if (i % 128 != 0)builder.append("drawflush display1\n");
+				if (i % 128 != 0 || i == 0)builder.append("drawflush display1\n");
 				builder.append(codeEnd.replace("$", String.valueOf(usedProcs-index)));
-				// TODO: Allow for other processors
-				LogicBuild lBuild = (LogicBuild) Blocks.microProcessor.newBuilding();
-				lBuild.tile = new Tile(x, y);
-				lBuild.updateCode(builder.toString());
-				lBuild.links.add(new LogicBlock.LogicLink(this.x, this.y, "display1", true));
-				// TODO: Allow for other processors
-				Stile stile = new Stile(Blocks.microProcessor, x, y, lBuild.config(), (byte) 0);
+				Stile stile = this.fillCode(pos, builder);
 				tileArray.add(stile);
 				if (i >= shapes.size-1) {
 					Log.info("@ Finished with @ processors", this, index+1);
@@ -203,6 +208,30 @@ public class SchemBuilder {
 				}
 			}
 			Log.warn("Failed to fit @ shapes into @ processors", shapes.size, this.points.size);
+		}
+
+		private void buildSingle(Seq<Shape> shapes, Seq<Stile> tileArray, LogicDisplay display) {
+			StringBuilder builder = new StringBuilder();
+			builder.append(codeStartSingle);
+			int i = 0;
+			for (; i < shapes.size; i++) {
+				builder.append(shapes.get(i).toInstr());
+				if (i != 0 && i % 128 == 0) builder.append("drawflush display1\n");
+			}
+			if (i % 128 != 0 || i == 0) builder.append("drawflush display1\n");
+			tileArray.add(this.fillCode(this.points.first(), builder));
+			tileArray.add(new Stile(display, this.x, this.y, null, (byte) 0));
+		}
+
+		public Stile fillCode(int pos, StringBuilder code) {
+			// TODO: Allow for other processors
+			int x = Point2.x(pos);
+			int y  = Point2.y(pos);
+			LogicBuild lBuild = (LogicBuild) Blocks.microProcessor.newBuilding();
+			lBuild.tile = new Tile(x, y);
+			lBuild.updateCode(code.toString());
+			lBuild.links.add(new LogicBlock.LogicLink(this.x, this.y, "display1", true));
+			return new Stile(Blocks.microProcessor, x, y, lBuild.config(), (byte) 0);
 		}
 
 		public int maxPoints() {

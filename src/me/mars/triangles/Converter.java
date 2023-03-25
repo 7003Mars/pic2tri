@@ -1,6 +1,5 @@
 package me.mars.triangles;
 
-import arc.files.Fi;
 import arc.graphics.Pixmap;
 import arc.math.Mathf;
 import arc.struct.*;
@@ -22,7 +21,7 @@ public class Converter {
 
 	public LogicBlock block;
 	public LogicDisplay display;
-	public String name = "!!name me";
+	public String name;
 	public final int seed;
 	public int xChunks, yChunks;
 	private Pixmap source;
@@ -36,7 +35,8 @@ public class Converter {
 		this.xChunks = Mathf.ceilPositive((float) width/display.displaySize);
 		this.yChunks = Mathf.ceilPositive((float) height/display.displaySize);
 		this.seed = seed;
-		this.name = name;
+
+		this.name = name.isEmpty() ? "!!name me" : name;
 
 		this.block = block;
 		this.display = display;
@@ -89,13 +89,14 @@ public class Converter {
 		}
 		Seq<Stile> outTiles = new Seq<>();
 		for (int i = 0; i < this.tasks.size; i++) {
-			Seq<Shape> shapes = null;
+			Seq<Shape> shapes;
 			try {
 				shapes = this.tasks.get(i).get();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			} catch (InterruptedException ignored) {
+				continue;
 			} catch (ExecutionException e) {
 				Log.err(e);
+				continue;
 			}
 			this.filler.displays.get(i).build(shapes, outTiles, this.display);
 		}
@@ -107,17 +108,14 @@ public class Converter {
 	}
 
 	public float estTime() {
-		int count = 0;
 		float rate = 0f;
 		int left = 0;
 		for (Generator gen : this.generators) {
 			if (gen.getState() == Generator.GenState.Start) {
-				count++;
 				rate+= gen.rate();
 			}
 			left += gen.getMaxGen() - gen.cur();
 		}
-		rate/= count;
 		return left / rate / Time.toSeconds;
 	}
 

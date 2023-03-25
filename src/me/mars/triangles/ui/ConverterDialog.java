@@ -13,10 +13,9 @@ import me.mars.triangles.SchemBuilder;
 import me.mars.triangles.Generator;
 import mindustry.Vars;
 
-import static me.mars.triangles.PicToTri.internalName;
+import static me.mars.triangles.PicToTri.*;
 import static mindustry.Vars.tilesize;
 import static mindustry.Vars.ui;
-import static me.mars.triangles.PicToTri.bundle;
 
 import mindustry.content.Blocks;
 import mindustry.ui.dialogs.BaseDialog;
@@ -69,6 +68,7 @@ public class ConverterDialog extends BaseDialog {
 			this.convertersUpdated();
 			this.filler = new SchemBuilder(0, 0, 0, 0);
 			this.xChunks = this.yChunks = 0;
+			this.selectedOpt = null;
 			this.image.setDrawable(null);
 			this.currentLoaded.dispose();
 			this.currentLoaded = null;
@@ -105,7 +105,7 @@ public class ConverterDialog extends BaseDialog {
 		this.updateScales();
 		// Set config stuff
 		this.configs.nameField.setText(fi.nameWithoutExtension());
-		String seed = Core.settings.getString(internalName+".default-seed");
+		String seed = Core.settings.getString(setting("default-seed"));
 		this.configs.seedField.setText(seed.isEmpty() ? String.valueOf(Mathf.random(Integer.MAX_VALUE-1)) : seed);
 		Log.debug("range of @-@", this.minScl(), this.maxScl());
 	}
