@@ -11,10 +11,10 @@ author: "Mars#7003"
 main: "me.mars.triangles.PicToTri"
 
 #the mod description as seen in the mod dialog
-description: "I love triangles!!1!11"
+description: "Adds a dialog for turning images into schematics"
 
 #the mod version
-version: 1.0
+version: REPLACEME
 
 #the minimum game build required to run this mod
 minGameVersion: 136
