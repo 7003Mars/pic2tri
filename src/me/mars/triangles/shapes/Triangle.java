@@ -104,7 +104,8 @@ public class Triangle extends Shape{
 //		float a2 = Math.abs(Angles.angle(this.x2, this.y2, this.x1, this.y1) - Angles.angle(this.x2, this.y2, this.x3, this.y3));
 //		float a3 = 180 - a1 - a2;
 //		return a2 < minAng || a3 < minAng;
-		return (this.x1 == this.x2 || this.x2 == this.x3 /* || this.x1 == this.x3*/) || (this.y1 == this.y2 || this.y2 == this.y3 /* ||this.y1 == this.y3*/);
+		// TODO: Fix this entire function
+		return (this.x1 == this.x2 || this.x2 == this.x3 || this.x1 == this.x3) || (this.y1 == this.y2 || this.y2 == this.y3 ||this.y1 == this.y3);
 //		return temp || temp2;
 	}
 

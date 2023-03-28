@@ -11,6 +11,7 @@ import arc.math.geom.Point2;
 import arc.math.geom.Vec2;
 import arc.scene.Element;
 import arc.scene.event.ClickListener;
+import arc.scene.event.ElementGestureListener;
 import arc.scene.event.InputEvent;
 import arc.scene.ui.layout.Scl;
 import arc.util.Nullable;
@@ -32,33 +33,49 @@ public class ImageGrid extends Element {
 
 	public ImageGrid(ConverterDialog dialog) {
 		this.dialog = dialog;
-		this.addListener(new DragListener(KeyCode.mouseRight) {
+		this.addListener(new DragListener(KeyCode.mouseLeft) {
 			@Override
 			public void dragged(float xDelta, float yDelta) {
 				float scaledSize = scaled(ImageGrid.this.zoom);
-				xDelta/= scaledSize/2f;
-				yDelta/= scaledSize/2f;
-				ImageGrid.this.panX+= xDelta;
-				ImageGrid.this.panY+= yDelta;
+				xDelta /= scaledSize / 2f;
+				yDelta /= scaledSize / 2f;
+				ImageGrid.this.panX += xDelta;
+				ImageGrid.this.panY += yDelta;
 				ImageGrid.this.clampPos();
+			}
+
+			@Override
+			public void clicked(float x, float y) {
+				float scl = scaled(ImageGrid.this.zoom);
+				x -= ImageGrid.this.width / 2f;
+				y -= ImageGrid.this.height / 2f;
+				x -= ImageGrid.this.panX * scl / 2f;
+				y -= ImageGrid.this.panY * scl / 2f;
+				// Remove the logic range padding
+				int sx = (int) (x / scl - dialog.lBlock.range / Vars.tilesize);
+				int sy = (int) (y / scl - dialog.lBlock.range / Vars.tilesize);
+				sx /= dialog.lDisplay.size;
+				sy /= dialog.lDisplay.size;
+//				Log.info("select [@, @] at @, @", sx, sy);
+				if (sx < 0 || sx >= dialog.xChunks || sy < 0 || sy >= dialog.yChunks) return;
+				ImageGrid.this.sx = sx;
+				ImageGrid.this.sy = sy;
+				dialog.select(sx, sy);
 			}
 
 			@Override
 			public void enter(InputEvent event, float x, float y, int pointer, Element fromActor) {
 				ImageGrid.this.requestScroll();
-				// REMOVEME
 				ImageGrid.this.requestKeyboard();
 			}
 
 			@Override
 			public boolean scrolled(InputEvent event, float x, float y, float amountX, float amountY) {
-				ImageGrid.this.zoom = Mathf.clamp(ImageGrid.this.zoom - amountY/10f, 0.1f, 10f);
+				ImageGrid.this.zoom = Mathf.clamp(ImageGrid.this.zoom - amountY / 10f, 0.1f, 15f);
 				ImageGrid.this.clampPos();
 				return true;
 			}
-		});
-		this.addListener(new ClickListener(){
-			// REMOVEME
+
 			@Override
 			public boolean keyTyped(InputEvent event, char character) {
 				switch (character) {
@@ -66,36 +83,28 @@ public class ImageGrid extends Element {
 						ImageGrid.this.panX = ImageGrid.this.panY = 0f;
 						return true;
 					}
-					case 'u' -> {
-						ImageGrid.this.panY++;
-						return true;
-					}
 					default -> {
 						return false;
 					}
 				}
 			}
-
-			@Override
-			public void clicked(InputEvent event, float x, float y) {
-				if (event.keyCode != KeyCode.mouseLeft) return;
-				float scl = scaled(ImageGrid.this.zoom);
-				x-= ImageGrid.this.width/2f;
-				y-= ImageGrid.this.height/2f;
-				x-= ImageGrid.this.panX * scl/2f;
-				y-= ImageGrid.this.panY * scl/2f;
-				// Remove the logic range padding
-				int sx = (int) (x/scl - dialog.lBlock.range/Vars.tilesize);
-				int sy = (int) (y/scl - dialog.lBlock.range/Vars.tilesize);
-				sx/= dialog.lDisplay.size;
-				sy/= dialog.lDisplay.size;
-//				Log.info("select [@, @] at @, @", sx, sy);
-				if (sx < 0 || sx >= dialog.xChunks || sy < 0 || sy >= dialog.yChunks) return;
-				ImageGrid.this.sx = sx;
-				ImageGrid.this.sy = sy;
-				dialog.select(sx, sy);
-			}
 		});
+		if (Vars.mobile) {
+			this.addListener(new ElementGestureListener() {
+				float lastZoom;
+				@Override
+				public void zoom(InputEvent event, float initialDistance, float distance) {
+					ImageGrid.this.zoom = Mathf.clamp(distance/initialDistance*this.lastZoom, 0.1f, 15f);
+					ImageGrid.this.clampPos();
+				}
+
+				@Override
+				public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
+					this.lastZoom = ImageGrid.this.zoom;
+				}
+			});
+		}
+
 	}
 
 	public void setDrawable(@Nullable Pixmap pixmap) {

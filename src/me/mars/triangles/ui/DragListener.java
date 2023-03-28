@@ -6,17 +6,26 @@ import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
 
 public abstract class DragListener extends InputListener {
-	public KeyCode touchKey;
+	public KeyCode tapKey;
 
 	private float lastX, lastY;
+	private float startX, startY;
 
-	public DragListener(KeyCode key) {
-		this.touchKey = key;
+	public float tapSquare = 14;
+	public boolean pressed = false;
+
+	public DragListener(KeyCode tapKey) {
+		this.tapKey = tapKey;
 	}
 
 	@Override
 	public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
-		if ((Core.app.isMobile() && pointer != 0) || button != this.touchKey) return false;
+		if (Core.app.isMobile() && pointer != 0) return false;
+		this.pressed = button == this.tapKey;
+		if (this.pressed) {
+			this.startX = x;
+			this.startY = y;
+		}
 //		Log.info("Touchdown: @, @", x,y);
 		this.lastX = x;
 		this.lastY = y;
@@ -26,7 +35,7 @@ public abstract class DragListener extends InputListener {
 	@Override
 	public void touchDragged(InputEvent event, float x, float y, int pointer) {
 		if ((Core.app.isMobile() && pointer != 0)) return;
-//		Log.info("Drag: @, @, last: @, @", x, y, this.lastX, this.lastY);
+		this.pressed &= this.inSquare(x, y);
 		this.dragged(x - this.lastX, y - this.lastY);
 		this.lastX = x;
 		this.lastY = y;
@@ -34,8 +43,14 @@ public abstract class DragListener extends InputListener {
 
 	@Override
 	public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
+		if (this.pressed && button == this.tapKey && this.inSquare(x, y)) this.clicked(x, y);
+	}
 
+	private boolean inSquare(float x, float y) {
+		return Math.abs(this.startX - x) <= this.tapSquare && Math.abs(this.startY - y) <= this.tapSquare;
 	}
 
 	public abstract void dragged(float xDelta, float yDelta);
+
+	public abstract void clicked(float x, float y);
 }
