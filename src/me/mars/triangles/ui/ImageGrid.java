@@ -185,7 +185,7 @@ public class ImageGrid extends Element {
 		GlyphLayout layout = Pools.obtain(GlyphLayout.class, GlyphLayout::new);
 		layout.setText(font, builder.toString());
 		Draw.color(0, 0, 0, 0.5f);
-		Fill.rect(this.x + layout.width/2f, this.y + layout.height, layout.width, layout.height);
+		Fill.rect(this.x + layout.width/2f, this.y + layout.height/2f, layout.width, layout.height);
 		Draw.color();
 		font.draw(layout, this.x, this.y + layout.height);
 		Pools.free(layout);
