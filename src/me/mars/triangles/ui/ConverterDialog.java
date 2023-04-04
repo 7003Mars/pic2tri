@@ -3,6 +3,7 @@ package me.mars.triangles.ui;
 import arc.Core;
 import arc.files.Fi;
 import arc.graphics.Pixmap;
+import arc.graphics.PixmapIO;
 import arc.graphics.Pixmaps;
 import arc.math.Mathf;
 import arc.scene.ui.layout.Table;
@@ -44,7 +45,7 @@ public class ConverterDialog extends BaseDialog {
 	public ConverterDialog() {
 		super("Image converter");
 		this.closeOnBack();
-		this.addCloseButton ();
+		this.addCloseButton();
 		// Buttons
 		this.buttons.button(bundle("select"), () -> Vars.platform.showFileChooser(true, "png", (fi) -> {
 			try {
@@ -88,8 +89,16 @@ public class ConverterDialog extends BaseDialog {
 	}
 
 	public void loadPixmap(Fi fi) throws ArcRuntimeException {
-		Pixmap pixmap = new Pixmap(fi);
-
+		Core.settings.put(pixmapCheck, true);
+		Core.settings.forceSave();
+		Pixmap pixmap;
+		if (Core.settings.getBool(setting("java-loader"))) {
+			pixmap = PixmapIO.readPNG(fi);
+		} else {
+			pixmap = new Pixmap(fi);
+		}
+		Core.settings.put(pixmapCheck, false);
+		Core.settings.forceSave();
 
 		if (this.currentLoaded != null) this.currentLoaded.dispose();
 		int minSize = this.lDisplay.displaySize;

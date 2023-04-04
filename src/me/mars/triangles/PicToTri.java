@@ -17,7 +17,18 @@ import static mindustry.ui.dialogs.SettingsMenuDialog.SettingsTable.TextSetting;
 
 public class PicToTri extends Mod {
 	public static final String internalName = "triangles";
+	public static final String pixmapCheck = internalName+"-pixmap-load-fail";
+
 	public static volatile boolean debugMode = false;
+
+	public PicToTri() {
+		Core.settings.defaults(pixmapCheck, false);
+		if (Core.settings.getBool(pixmapCheck)) {
+			Core.settings.put(pixmapCheck, false);
+			Core.settings.put(setting("java-loader"), true);
+			Log.warn("Game crashed while loading image, switching to PixmapIO");
+		}
+	}
 
 	@Override
 	public void init() {
@@ -26,6 +37,7 @@ public class PicToTri extends Mod {
 		Vars.ui.settings.addCategory("Triangles", t -> {
 			t.checkPref(setting("debug-mode"), false, changed -> debugMode = changed);
 			t.pref(new SeedSetting(setting("default-seed")));
+			t.checkPref(setting("java-loader"), false);
 			Core.settings.defaults(setting("default-seed"), "");
 		});
 
