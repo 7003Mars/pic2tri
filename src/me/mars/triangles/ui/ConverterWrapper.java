@@ -3,6 +3,7 @@ package me.mars.triangles.ui;
 import arc.graphics.Color;
 import arc.scene.ui.Button;
 import arc.scene.ui.CheckBox;
+import arc.scene.ui.TextField;
 import arc.scene.ui.layout.Table;
 import arc.util.Strings;
 import me.mars.triangles.Converter;
@@ -15,13 +16,30 @@ import mindustry.ui.Styles;
 
 public class ConverterWrapper extends Table {
 	CheckBox collasped;
+	private boolean nameSet = false;
 	ConverterDialog dialog;
 	Converter conv;
+
 	public ConverterWrapper(ConverterDialog dialog, Converter conv) {
 		this.dialog = dialog;
 		this.conv = conv;
 		this.background(Tex.pane).top();
-		this.label(() -> this.conv.complete() ? this.conv.name : formatTime(this.conv.estTime()));
+		TextField nameField = new TextField();
+		nameField.update(() -> {
+			boolean complete = this.conv.complete();
+			nameField.setDisabled(!complete);
+			if (!complete) {
+				nameField.setText(formatTime(this.conv.estTime()));
+			} else if (!this.nameSet) {
+				this.nameSet = true;
+				nameField.setText(this.conv.name);
+			}
+		});
+		nameField.changed(() -> {
+			if (!nameField.isValid()) return;
+			this.conv.name = nameField.getText();
+		});
+		this.add(nameField);
 		Button exportButton = new Button(Icon.export);
 		exportButton.setDisabled(() -> !this.conv.complete());
 		exportButton.clicked(() -> {
