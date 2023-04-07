@@ -7,12 +7,20 @@ import arc.struct.Seq;
 import arc.struct.Sort;
 import arc.util.ArcRuntimeException;
 import arc.util.Log;
+import arc.util.pooling.Pool;
 import me.mars.triangles.shapes.ScanLine;
 
 public class MutateMap extends Pixmap {
 	public final Pixmap origin;
 	private Seq<ScanLine> marks = new Seq<>();
 	public Sort sort = new Sort();
+
+	private Pool<ScanLine> linePool = new Pool<>() {
+		@Override
+		protected ScanLine newObject() {
+			return new ScanLine();
+		}
+	};
 
 
 	public MutateMap(Pixmap origin) {
@@ -71,7 +79,12 @@ public class MutateMap extends Pixmap {
 	}
 
 	public void drop() {
+		this.linePool.freeAll(this.marks);
 		this.marks.clear();
+	}
+
+	public ScanLine obtainLine() {
+		return this.linePool.obtain();
 	}
 
 	public void apply(int col) {

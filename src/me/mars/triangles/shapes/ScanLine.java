@@ -1,13 +1,16 @@
 package me.mars.triangles.shapes;
 
-public class ScanLine {
+import arc.util.pooling.Pool;
+
+public class ScanLine implements Pool.Poolable {
 	public int y;
 	public int x1, x2;
 
-	public ScanLine(int x1, int x2, int y) {
+	public ScanLine set(int x1, int x2, int y) {
 		this.y = y;
 		this.x1 = x1;
 		this.x2 = x2;
+		return this;
 	}
 
 	@Override
@@ -17,5 +20,10 @@ public class ScanLine {
 				", x1=" + x1 +
 				", x2=" + x2 +
 				'}';
+	}
+
+	@Override
+	public void reset() {
+		this.x1 = this.x2 = this.y = 0;
 	}
 }

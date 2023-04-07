@@ -80,33 +80,9 @@ public class Triangle extends Shape{
 
 	@Override
 	protected boolean invalid() {
-		// REMOVEME: Dist checks might help?
-//		final int minDist2 = 9;
-//		if (Mathf.dst2(this.x1, this.y1, this.x2, this.y2) < minDist2) return true;
-//		if (Mathf.dst2(this.x2, this.y2, this.x3, this.y3) < minDist2) return true;
-//		if (Mathf.dst2(this.x1, this.y1, this.x3, this.y3) < minDist2) return true;
-//
-//		 Ensure this is <60
-		final float minAng = 10;
-//		int x1 = this.x2 - this.x1;
-//		int y1 = this.y2 - this.y1;
-//		float d1 = Mathf.dst(x1, y1);
-//		int x2 = this.x3 - this.x1;
-//		int y2 = this.y3 - this.y1;
-//		float d2 = Mathf.dst(x2, y2);
-//		x1/=d1;
-//		y1/=d1;
-//		x2/=d2;
-//		y2/=d2;
-//		int a1 = Mathf.
-//		float a1 = Math.abs(Angles.angle(this.x1, this.y1, this.x3, this.y3) - Angles.angle(this.x1, this.y1, this.x2, this.y2));
-//		if (a1 < minAng) return true;
-//		float a2 = Math.abs(Angles.angle(this.x2, this.y2, this.x1, this.y1) - Angles.angle(this.x2, this.y2, this.x3, this.y3));
-//		float a3 = 180 - a1 - a2;
-//		return a2 < minAng || a3 < minAng;
 		// TODO: Fix this entire function
+//		return false;
 		return (this.x1 == this.x2 || this.x2 == this.x3 || this.x1 == this.x3) || (this.y1 == this.y2 || this.y2 == this.y3 ||this.y1 == this.y3);
-//		return temp || temp2;
 	}
 
 	@Override
@@ -143,7 +119,7 @@ public class Triangle extends Shape{
 		}
 		float curX1 = x3, curX2 = x3;
 		for (int scanY = y3; scanY >= y1; scanY--) {
-			pixmap.mark(new ScanLine((int)curX1,(int) curX2, scanY));
+			pixmap.mark(pixmap.obtainLine().set((int)curX1,(int) curX2, scanY));
 			curX1-=invSlope1;
 			curX2-=invSlope2;
 		}
@@ -161,7 +137,7 @@ public class Triangle extends Shape{
 		float curX1 = x1, curX2 = x1;
 		if (skipTop) y3--;
 		for (int scanY = y1; scanY <= y3; scanY++) {
-			pixmap.mark(new ScanLine((int)curX1,(int) curX2, scanY));
+			pixmap.mark(pixmap.obtainLine().set((int)curX1,(int) curX2, scanY));
 			curX1+=invSlope1;
 			curX2+=invSlope2;
 		}

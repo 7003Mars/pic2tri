@@ -38,7 +38,7 @@ public class Rectangle extends Shape{
 	@Override
 	public void fill(MutateMap pixmap) {
 		for (int y = Math.min(this.y1, this.y2); y <= Math.max(this.y1, y2); y++) {
-			pixmap.mark(new ScanLine(this.x1, this.x2, y));
+			pixmap.mark(pixmap.obtainLine().set(this.x1, this.x2, y));
 		}
 	}
 
