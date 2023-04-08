@@ -34,7 +34,7 @@ public class PicToTri extends Mod {
 	public void init() {
 		Log.info("@ running version: @, with @ threads", internalName,  Vars.mods.getMod(internalName).meta.version, OS.cores);
 
-		Vars.ui.settings.addCategory("Triangles", t -> {
+		Vars.ui.settings.addCategory(bundle("mod-name"), t -> {
 			t.checkPref(setting("debug-mode"), false, changed -> debugMode = changed);
 			t.pref(new SeedSetting(setting("default-seed")));
 			t.checkPref(setting("java-loader"), false);

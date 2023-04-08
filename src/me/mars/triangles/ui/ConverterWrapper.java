@@ -1,8 +1,10 @@
 package me.mars.triangles.ui;
 
 import arc.graphics.Color;
+import arc.scene.Element;
 import arc.scene.ui.Button;
 import arc.scene.ui.CheckBox;
+import arc.scene.ui.ProgressBar;
 import arc.scene.ui.TextField;
 import arc.scene.ui.layout.Table;
 import arc.util.Strings;
@@ -11,12 +13,12 @@ import me.mars.triangles.Generator;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
-import mindustry.ui.Fonts;
+import mindustry.graphics.Pal;
+import mindustry.ui.Bar;
 import mindustry.ui.Styles;
 
 public class ConverterWrapper extends Table {
-	CheckBox collasped;
-	private boolean nameSet = false;
+	CheckBox collapsed;
 	ConverterDialog dialog;
 	Converter conv;
 
@@ -24,22 +26,16 @@ public class ConverterWrapper extends Table {
 		this.dialog = dialog;
 		this.conv = conv;
 		this.background(Tex.pane).top();
-		TextField nameField = new TextField();
-		nameField.update(() -> {
-			boolean complete = this.conv.complete();
-			nameField.setDisabled(!complete);
-			if (!complete) {
-				nameField.setText(formatTime(this.conv.estTime()));
-			} else if (!this.nameSet) {
-				this.nameSet = true;
-				nameField.setText(this.conv.name);
-			}
-		});
+		Bar progressBar = new Bar(() -> (int)(this.conv.totalProgress()*100)+"%",
+				() -> Pal.gray, () -> this.conv.totalProgress());
+		progressBar.visible(() -> !this.conv.complete());
+		TextField nameField = new TextField(this.conv.name);
 		nameField.changed(() -> {
 			if (!nameField.isValid()) return;
 			this.conv.name = nameField.getText();
 		});
-		this.add(nameField);
+		nameField.visible(() -> this.conv.complete());
+		this.stack(progressBar, nameField);
 		Button exportButton = new Button(Icon.export);
 		exportButton.setDisabled(() -> !this.conv.complete());
 		exportButton.clicked(() -> {
@@ -56,17 +52,7 @@ public class ConverterWrapper extends Table {
 		}));
 		cancelButton.setDisabled(() -> this.conv.complete());
 		this.add(cancelButton).margin(1f);
-		this.add(this.collasped = new CheckBox(null, new CheckBox.CheckBoxStyle(){{
-			checkboxOn = Icon.downOpen;
-			checkboxOff = Icon.upOpen;
-			checkboxOnOver = checkboxOn;
-			checkboxOver = checkboxOff;
-			checkboxOnDisabled = checkboxOn;
-			checkboxOffDisabled = checkboxOff;
-			font = Fonts.def;
-			fontColor = Color.white;
-			disabledFontColor = Color.gray;
-		}})).margin(1f);
+		this.add(this.collapsed = new CheckBox(null, Styles2.collapseStyle)).margin(1f);
 		this.row();
 		this.collapser(t -> {
 			t.setBackground(Styles.grayPanel);
@@ -90,7 +76,7 @@ public class ConverterWrapper extends Table {
 				t.label(() -> formatTime(gen.timeToCompletion()) + " " + Strings.fixed(gen.acc()*100f, 3) + "%");
 				t.row();
 			}
-		}, true, () -> this.collasped.isChecked());
+		}, true, () -> this.collapsed.isChecked());
 	}
 
 	static String formatTime(float time) {

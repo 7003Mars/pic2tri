@@ -43,7 +43,7 @@ public class ConverterDialog extends BaseDialog {
 	Seq<Converter> converters = new Seq<>();
 
 	public ConverterDialog() {
-		super("Image converter");
+		super(bundle("mod-name"));
 		this.closeOnBack();
 		this.addCloseButton();
 		// Buttons

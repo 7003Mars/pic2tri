@@ -1,5 +1,6 @@
 package me.mars.triangles;
 
+import arc.Core;
 import arc.graphics.Pixmap;
 import arc.math.Mathf;
 import arc.struct.*;
@@ -64,7 +65,7 @@ public class Converter {
 				int yOffset = this.displayRes() * y;
 				cropped.draw(this.source, xOffset, yOffset, displayRes(), displayRes(), 0, 0, displayRes(), displayRes(), true);
 				Generator generator = new Generator(cropped, this, options.get(y * this.xChunks + x), true);
-				Log.info("Submitted generator @", generator);
+				Log.debug("Submitted generator @", generator);
 				this.tasks.add(executor.submit(generator));
 				this.generators.add(generator);
 			}
@@ -103,20 +104,18 @@ public class Converter {
 		StringMap tags = new StringMap();
 		tags.put("name", this.name);
 		Schematic schem = new Schematic(outTiles, tags, this.filler.width, this.filler.height);
+		schem.labels.add(Core.bundle.get(PicToTri.setting("mod-name")));
 		Vars.schematics.add(schem);
 		// TODO: Proper generator
 	}
 
-	public float estTime() {
-		float rate = 0f;
-		int left = 0;
+	public float totalProgress() {
+		int cur = 0, total = 0;
 		for (Generator gen : this.generators) {
-			if (gen.getState() == Generator.GenState.Start) {
-				rate+= gen.rate();
-			}
-			left += gen.getMaxGen() - gen.cur();
+			cur+= gen.cur();
+			total+= gen.getMaxGen();
 		}
-		return left / rate / Time.toSeconds;
+		return (float) cur/total;
 	}
 
 
