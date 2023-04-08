@@ -88,7 +88,11 @@ public class Triangle extends Shape{
 	@Override
 	public void fill(MutateMap pixmap) {
 		// http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
-		Point2[] p = {new Point2(this.x1, this.y1), new Point2(this.x2, this.y2), new Point2(this.x3, this.y3)};
+		Point2 p1 = pixmap.pointPool.obtain().set(this.x1, this.y1);
+		Point2 p2 = pixmap.pointPool.obtain().set(this.x2, this.y2);
+		Point2 p3 = pixmap.pointPool.obtain().set(this.x3, this.y3);
+		Point2[] p = {p1, p2, p3};
+//		Point2[] p = {new Point2(this.x1, this.y1), new Point2(this.x2, this.y2), new Point2(this.x3, this.y3)};
 		pixmap.sort.sort(p, Structs.comparingInt(point2 -> point2.y));
 		if (p[0].y == p[1].y) {
 			// point[2] is the highest
@@ -104,6 +108,9 @@ public class Triangle extends Shape{
 			fillBotFlat(pixmap, p[1].x, p[1].y, x4, y4, p[2].x, p[2].y);
 			fillTopFlat(pixmap, p[0].x, p[0].y, x4, y4, p[1].x, p[1].y, true);
 		}
+		pixmap.pointPool.free(p1);
+		pixmap.pointPool.free(p2);
+		pixmap.pointPool.free(p3);
 
 	}
 

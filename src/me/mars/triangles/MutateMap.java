@@ -3,6 +3,7 @@ package me.mars.triangles;
 import arc.graphics.Color;
 import arc.graphics.Pixmap;
 import arc.math.Mathf;
+import arc.math.geom.Point2;
 import arc.struct.Seq;
 import arc.struct.Sort;
 import arc.util.ArcRuntimeException;
@@ -19,6 +20,12 @@ public class MutateMap extends Pixmap {
 		@Override
 		protected ScanLine newObject() {
 			return new ScanLine();
+		}
+	};
+	public Pool<Point2> pointPool = new Pool<>() {
+		@Override
+		protected Point2 newObject() {
+			return new Point2();
 		}
 	};
 
@@ -128,6 +135,7 @@ public class MutateMap extends Pixmap {
 
 	public void mark(ScanLine scanLine) {
 		if (scanLine.y < 0 || scanLine.y >= this.height) {
+			this.linePool.free(scanLine);
 			return;
 		}
 		scanLine.x1 = Mathf.clamp(scanLine.x1, 0, this.width-1);
@@ -139,6 +147,13 @@ public class MutateMap extends Pixmap {
 		}
 		if (marks.contains(l -> l.y == scanLine.y)) Log.warn("@ already there? For line @", scanLine.y, scanLine);
 		marks.add(scanLine);
+	}
+
+	@Override
+	public void dispose() {
+		super.dispose();
+		this.pointPool.clear();
+		this.linePool.clear();
 	}
 
 	static int red(int col) {
