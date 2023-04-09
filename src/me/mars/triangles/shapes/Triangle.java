@@ -12,6 +12,8 @@ import me.mars.triangles.Generator;
 public class Triangle extends Shape{
 	// REMOVEME
 //	public static int a1Fail = 0, a2Fail = 0, a3Fail = 0;
+	private static final int maxOut = 16;
+	private static final int max = 20;
 
 	public int x1, y1, x2, y2, x3, y3;
 
@@ -32,7 +34,6 @@ public class Triangle extends Shape{
 
 	@Override
 	public void randomise(Generator context, Rand rand) {
-		final int max = 25;
 		int w = context.original.width - 1;
 		int h = context.original.height - 1;
 		do {
@@ -50,27 +51,28 @@ public class Triangle extends Shape{
 	public void mutate(Generator context, Rand rand) {
 		int w = context.original.width - 1;
 		int h = context.original.height - 1;
-		boolean canOut = this.x1 >= 0 && this.x1 <= w && this.x2 >= 0 && this.x2 <= w && this.x3 >= 0 && this.x3 <= w &&
-				this.y1 >= 0 && this.y1 <= h && this.y2 >= 0 && this.y2 <= h && this.y3 >= 0 && this.y3 <= h;
-//		boolean canOut = (this.x1 >= 0 && this.x1 <= w && this.y1 >= 0 && this.y1 <= h) ||
-//				(this.x2 >= 0 && this.x2 <= w && this.y2 >= 0 && this.y2 <= h) ||
-//				(this.x3 >= 0 && this.x3 <= w && this.y3 >= 0 && this.y3 <= h);
-		int bounds = canOut ? 16 : 0;
+		boolean p1In = this.x1 >= 0 && this.x1 < w && this.y1 >= 0 && this.y1 < h;
+		boolean p2In = this.x2 >= 0 && this.x2 < w && this.y2 >= 0 && this.y2 < h;
+		boolean p3In = this.x3 >= 0 && this.x3 < w && this.y3 >= 0 && this.y3 < h;
+		int bounds;
 		do {
-			float rx = rand.nextFloat()*20f - 10f;
+			float rx = rand.nextFloat()*max - max/2f;
 			int cx = (rx > 0) ? Mathf.ceilPositive(rx) : Mathf.floor(rx);
-			float ry = rand.nextFloat()*20f - 10f;
+			float ry = rand.nextFloat()*max - max/2f;
 			int cy = (ry > 0) ? Mathf.ceilPositive(ry) : Mathf.floor(ry);
 			switch (rand.random(2)) {
 				case 0 -> {
+					bounds = p2In || p3In ? maxOut : 0;
 					this.x1 = Mathf.clamp(this.x1+cx, -bounds, w-1+bounds);
 					this.y1 = Mathf.clamp(this.y1+cy, -bounds, h-1+bounds);
 				}
 				case 1 -> {
+					bounds = p1In || p3In ? maxOut : 0;
 					this.x2 = Mathf.clamp(this.x2+cx, -bounds, w-1+bounds);
 					this.y2 = Mathf.clamp(this.y2+cy, -bounds, h-1+bounds);
 				}
 				case 2 -> {
+					bounds = p1In || p2In ? maxOut: 0;
 					this.x3 = Mathf.clamp(this.x3+cx, -bounds, w-1+bounds);
 					this.y3 = Mathf.clamp(this.y3+cy, -bounds, h-1+bounds);
 				}
