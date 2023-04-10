@@ -112,7 +112,7 @@ public class Converter {
 	public float totalProgress() {
 		int cur = 0, total = 0;
 		for (Generator gen : this.generators) {
-			cur+= gen.cur();
+			cur+= gen.getState() == Generator.GenState.Done ? gen.getMaxGen() : gen.cur();
 			total+= gen.getMaxGen();
 		}
 		return (float) cur/total;
