@@ -51,7 +51,8 @@ public class SchemBuilder {
 		Max_Shapes = freeInstructions/2;
 		freeInstructions = LExecutor.maxInstructions - Strings.count(codeStartSingle, "\n");
 		freeInstructions-= Mathf.ceilPositive(freeInstructions/256f);
-		Max_Shapes_Single = freeInstructions/2;
+//		Max_Shapes_Single = freeInstructions/2;
+		Max_Shapes_Single = 128;
 	}
 
 	public Seq<Display> displays;
@@ -185,19 +186,20 @@ public class SchemBuilder {
 			int i = 0;
 			int usedProcs = Mathf.ceilPositive((float) shapes.size/ Max_Shapes);
 			for (int index = 0; index < this.points.size; index++) {
+				// TODO: Drawflushes might be at the wrong positions
 				int pos = this.points.items[index];
 				StringBuilder builder = new StringBuilder();
 				builder.append(codeStart.replace("$", String.valueOf(index+1)));
 				int j = 0;
 				for (; j < Max_Shapes; j++) {
+					if (i+j >= shapes.size-1) break;
 					builder.append(shapes.get(i+j).toInstr());
-					if (j != 0 && j % 128 == 0) {
+					if (j != 0 && (j+1) % 128 == 0) {
 						builder.append("drawflush display1\n");
 					}
-					if (i+j >= shapes.size-1) break;
 				}
+				if (j % 128 != 0 || j == 0)builder.append("drawflush display1\n");
 				i+= j;
-				if (i % 128 != 0 || i == 0)builder.append("drawflush display1\n");
 				builder.append(codeEnd.replace("$", String.valueOf(usedProcs-index)));
 				Stile stile = this.fillCode(pos, builder);
 				tileArray.add(stile);
@@ -216,7 +218,7 @@ public class SchemBuilder {
 			int i = 0;
 			for (; i < shapes.size; i++) {
 				builder.append(shapes.get(i).toInstr());
-				if (i != 0 && i % 128 == 0) builder.append("drawflush display1\n");
+				if (i != 0 && (i+1) % 128 == 0) builder.append("drawflush display1\n");
 			}
 			if (i % 128 != 0 || i == 0) builder.append("drawflush display1\n");
 			tileArray.add(this.fillCode(this.points.first(), builder));
