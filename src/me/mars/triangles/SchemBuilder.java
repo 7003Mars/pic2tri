@@ -51,8 +51,8 @@ public class SchemBuilder {
 		Max_Shapes = freeInstructions/2;
 		freeInstructions = LExecutor.maxInstructions - Strings.count(codeStartSingle, "\n");
 		freeInstructions-= Mathf.ceilPositive(freeInstructions/256f);
-//		Max_Shapes_Single = freeInstructions/2;
-		Max_Shapes_Single = 128;
+		Max_Shapes_Single = freeInstructions/2;
+//		Max_Shapes_Single = 128;
 	}
 
 	public Seq<Display> displays;
