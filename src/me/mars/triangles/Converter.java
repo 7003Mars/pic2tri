@@ -88,6 +88,7 @@ public class Converter {
 			Log.err("Generators not finished");
 			return;
 		}
+		SchemBuilder builder = this.filler.rebuild();
 		Seq<Stile> outTiles = new Seq<>();
 		for (int i = 0; i < this.tasks.size; i++) {
 			Seq<Shape> shapes;
@@ -99,11 +100,11 @@ public class Converter {
 				Log.err(e);
 				continue;
 			}
-			this.filler.displays.get(i).build(shapes, outTiles, this.display);
+			builder.displays.get(i).build(shapes, outTiles, this.display);
 		}
 		StringMap tags = new StringMap();
 		tags.put("name", this.name);
-		Schematic schem = new Schematic(outTiles, tags, this.filler.width, this.filler.height);
+		Schematic schem = new Schematic(outTiles, tags, builder.width, builder.height);
 		schem.labels.add(Core.bundle.get(PicToTri.setting("mod-name")));
 		Vars.schematics.add(schem);
 		// TODO: Proper generator

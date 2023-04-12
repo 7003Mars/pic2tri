@@ -112,6 +112,19 @@ public class SchemBuilder {
 		return x >= this.width || x < 0 || y >= this.height || y < 0;
 	}
 
+	public SchemBuilder rebuild() {
+		SchemBuilder replacement = new SchemBuilder(this.xChunks, this.yChunks,
+				this.procRange, this.dispSize);
+		float midX = (this.width+1) /2f, midY = (this.height+1) /2f;
+		boolean failed = replacement.displays.copy().sort(display -> Mathf.dst2(display.x, display.y, midX, midY))
+				.contains(display -> {
+					Display selfDisplay = this.getDisplay(display.x, display.y);
+					 display.obtain(selfDisplay.points.size);
+					 return display.points.size != selfDisplay.points.size;
+				});
+		return failed ? this : replacement;
+	}
+
 	public class Display extends Generator.GenOpts {
 		int x, y;
 		IntSet pointSet = new IntSet();
