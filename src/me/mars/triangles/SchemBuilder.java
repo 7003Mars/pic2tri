@@ -4,10 +4,7 @@ import arc.graphics.Color;
 import arc.math.Mathf;
 import arc.math.geom.Geometry;
 import arc.math.geom.Point2;
-import arc.struct.Bits;
-import arc.struct.IntSeq;
-import arc.struct.IntSet;
-import arc.struct.Seq;
+import arc.struct.*;
 import arc.util.Log;
 import arc.util.Strings;
 import me.mars.triangles.shapes.Shape;
@@ -118,10 +115,11 @@ public class SchemBuilder {
 		float midX = (this.width+1) /2f, midY = (this.height+1) /2f;
 		boolean failed = replacement.displays.copy().sort(display -> Mathf.dst2(display.x, display.y, midX, midY))
 				.contains(display -> {
-					Display selfDisplay = this.getDisplay(display.x, display.y);
+					Display selfDisplay = this.displays.find(d -> d.x == display.x && d.y == display.y);
 					 display.obtain(selfDisplay.points.size);
 					 return display.points.size != selfDisplay.points.size;
 				});
+		Log.info("Rebuild " + (failed ? "failed" : "succeeded"));
 		return failed ? this : replacement;
 	}
 
