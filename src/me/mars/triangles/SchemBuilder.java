@@ -1,5 +1,6 @@
 package me.mars.triangles;
 
+import arc.Core;
 import arc.graphics.Color;
 import arc.math.Mathf;
 import arc.math.geom.Geometry;
@@ -17,21 +18,22 @@ import mindustry.world.blocks.logic.LogicBlock.LogicBuild;
 import mindustry.world.blocks.logic.LogicDisplay;
 
 public class SchemBuilder {
-	static final String codeStart = """
-			set i 0
+	private static final String codeStart = """
 			sensor e display1 @enabled
-			jump 1 equal e 1
+			jump 0 equal e 1
 			set t @tick
-			jump 4 equal @tick t
+			jump $ equal t @tick
 			control enabled display1 1 0 0 0
-			op add i i 1
-			jump 1 lessThan i $
 			""";
-	static final String codeEnd = """
-			set i -$
-			control enabled display1 0 0 0 0
-			jump 1 always 0 0
+	private static final String[] codeStartArray = Seq.with(codeStart.split("\n"))
+			.map(line -> line+"\n").toArray(String.class);
+
+	private static final String repeat = """
+			set t @tick
+			jump $ equal t @tick
 			""";
+	private static final String[] repeatArray = Seq.with(repeat.split("\n"))
+			.map(line -> line+"\n").toArray(String.class);
 
 	static final String codeStartSingle = """
 			sensor e display1 @enabled
@@ -39,14 +41,12 @@ public class SchemBuilder {
 			control enabled display1 1 0 0 0
 			""";
 
-	public static final int Max_Shapes;
+	public static final int startSize, repeatSize;
 	public static final int Max_Shapes_Single;
 	static {
-		int freeInstructions = LExecutor.maxInstructions - (Strings.count(codeStart, "\n") + Strings.count(codeEnd, "\n"));
-		// Account for draw flushes
-		freeInstructions-= Mathf.ceilPositive(freeInstructions/256f);
-		Max_Shapes = freeInstructions/2;
-		freeInstructions = LExecutor.maxInstructions - Strings.count(codeStartSingle, "\n");
+		startSize = codeStartArray.length;
+		repeatSize = repeatArray.length;
+		int freeInstructions = LExecutor.maxInstructions - Strings.count(codeStartSingle, "\n");
 		freeInstructions-= Mathf.ceilPositive(freeInstructions/256f);
 		Max_Shapes_Single = freeInstructions/2;
 //		Max_Shapes_Single = 128;
@@ -80,8 +80,6 @@ public class SchemBuilder {
 		float midX = (this.width+1) /2f, midY = (this.height+1) /2f;
 		this.displays.copy().sort(display -> Mathf.dst2(display.x, display.y, midX, midY))
 				.each(display -> {
-//					 REMOVEME: Remove log
-//					Log.info("O @", display);
 					display.obtain(1);
 				});
 	}
@@ -123,6 +121,31 @@ public class SchemBuilder {
 		return failed ? this : replacement;
 	}
 
+	public static int maxShapes(int procIndex) {
+		int free = (LExecutor.maxInstructions-startSize) - (procIndex*repeatSize*2);
+		int maxShapes = Mathf.floorPositive(free/2f);
+		maxShapes-= Mathf.ceilPositive(maxShapes/128f);
+		return maxShapes;
+	}
+
+	public static int totalShapes(int procCount) {
+		if (procCount == 0) return 0;
+		return maxShapes(procCount-1)*procCount;
+//		int sum = 0;
+//		for (int i = 0; i < procCount; i++) {
+//			sum+= maxShapes(i);
+//		}
+//		return sum;
+	}
+
+	public static int fitProcs(int shapes) {
+		// lazy solution.
+		for (int i = 1; i < 30; i++) {
+			if (totalShapes(i) >= shapes) return i;
+		}
+		return 29;
+	}
+
 	public class Display extends Generator.GenOpts {
 		int x, y;
 		IntSet pointSet = new IntSet();
@@ -159,9 +182,6 @@ public class SchemBuilder {
 				}
 			}
 			Log.warn("@ only obtained @ processors", this, this.points.size);
-//			Log.info("Last was @, @ Origin @ @", x, y,
-//					this.x + (float)(SchemBuilder.this.dispSize - 1)/2,
-//					this.y + (float)(SchemBuilder.this.dispSize - 1)/2);
 			return this.points.size;
 		}
 
@@ -175,8 +195,9 @@ public class SchemBuilder {
 		}
 
 		public int getProcs(int target) {
+			target = Math.min(target, 29);
 			int obtained = target > this.points.size ? this.obtain(target) : this.free(target);
-			this.maxGen = obtained == 1 ? Max_Shapes_Single : obtained * Max_Shapes;
+			this.maxGen = obtained == 1 ? Max_Shapes_Single : totalShapes(obtained);
 			return obtained;
 		}
 
@@ -194,33 +215,81 @@ public class SchemBuilder {
 				this.buildSingle(shapes, tileArray, display);
 				return;
 			}
-			int i = 0;
-			int usedProcs = Mathf.ceilPositive((float) shapes.size/ Max_Shapes);
-			for (int index = 0; index < this.points.size; index++) {
-				// TODO: Drawflushes might be at the wrong positions
-				int pos = this.points.items[index];
-				StringBuilder builder = new StringBuilder();
-				builder.append(codeStart.replace("$", String.valueOf(index+1)));
-				int j = 0;
-				for (; j < Max_Shapes; j++) {
-					if (i+j >= shapes.size-1) break;
-					builder.append(shapes.get(i+j).toInstr());
-					if (j != 0 && (j+1) % 128 == 0) {
-						builder.append("drawflush display1\n");
+			if (this.points.size > 29) {
+				Log.err("Logic for @ won't work with >29 processors", this);
+				return;
+			}
+			if (totalShapes(this.points.size) < shapes.size) {
+				Log.info("Not enough processors: @/@", totalShapes(this.points.size), shapes.size);
+			}
+			// Maps a position to a Seq of shapes
+			OrderedMap<Integer,Seq<Shape>> shapeMapping = new OrderedMap<>();
+			for (int i = 0; i < this.points.size; i++) {
+				shapeMapping.put(this.points.get(i), new Seq<>());
+			}
+			int shapeCount = 0;
+			done:
+			while (true) {
+				int remaining = shapes.size - shapeCount;
+				int maxObtain = Mathf.ceilPositive((float)remaining/this.points.size);
+				maxObtain = Math.min(maxObtain, 128);
+				for (Seq<Shape> procShapes: shapeMapping.values()) {
+					int c = 0;
+					// TODO: horrible code everywhere, refactor pls
+					while (c < maxObtain) {
+						procShapes.add(shapes.get(shapeCount));
+						shapeCount++;
+						if (shapeCount >= shapes.size) break done;
+						c++;
 					}
 				}
-				if (j % 128 != 0 || j == 0)builder.append("drawflush display1\n");
-				i+= j;
-				builder.append(codeEnd.replace("$", String.valueOf(usedProcs-index)));
-				Stile stile = this.fillCode(pos, builder);
-				tileArray.add(stile);
-				if (i >= shapes.size-1) {
-					Log.info("@ Finished with @ processors", this, index+1);
-					tileArray.add(new Stile(display, this.x, this.y, null, (byte) 0));
-					return;
-				}
 			}
-			Log.warn("Failed to fit @ shapes into @ processors", shapes.size, this.points.size);
+			// Calculate the maximum number of shapes for each processor
+			int maxFilled = shapeMapping.values().toSeq().max(seq -> seq.size).size;
+			if (maxFilled > maxShapes(this.points.size-1)) {
+				Log.err("Some processor(s) have > max shapes @/@", maxShapes(this.points.size-1), maxFilled);
+				for (Seq<Shape> seq : shapeMapping.values()) {
+					Log.warn("Size: @", seq.size);
+				}
+				return;
+			}
+			Seq<String> stringArray = new Seq<>();
+			int procIndex = 0;
+			for (var entry : shapeMapping) {
+				int pos = entry.key;
+				Seq<Shape> procShapes = entry.value;
+				stringArray.clear();
+				// Add initial code
+				stringArray.addAll(codeStartArray);
+				for (int repeat = 0; repeat < procIndex; repeat++) {
+					stringArray.addAll(repeatArray);
+					stringArray.addAll(repeatArray);
+				}
+				// Actual shapes
+				int count = 0;
+				for (; count < procShapes.size; count++) {
+					stringArray.add(procShapes.get(count).toInstr());
+					if ((count+1) % 128 == 0 && count != 0 && count != procShapes.size-1) stringArray.add("drawflush display1\n");
+				}
+				// Add padding
+				for (int padCount = 0; padCount < maxFilled-count; padCount++) {
+					stringArray.add("print \"Padding\"\n");
+					stringArray.add("print \"Padding\"\n");
+				}
+				// Then do the final flush if needed
+				if (count == 1 || count == procShapes.size || count % 128 != 0) stringArray.add("drawflush display1\n");
+				// Fill in the jump index
+				for (int i = 0; i < stringArray.size; i++) {
+					stringArray.set(i, stringArray.get(i).replace("$", String.valueOf(i)));
+				}
+				// Build tiles
+//				Log.info("building with size @", stringArray.size);
+				tileArray.add(this.fillCode(pos, String.join("", stringArray)));
+				Core.app.setClipboardText(String.join("", stringArray));
+				tileArray.add(new Stile(display, this.x, this.y, null, (byte) 0));
+				// End, increment index
+				procIndex++;
+			}
 		}
 
 		private void buildSingle(Seq<Shape> shapes, Seq<Stile> tileArray, LogicDisplay display) {
@@ -236,7 +305,7 @@ public class SchemBuilder {
 			tileArray.add(new Stile(display, this.x, this.y, null, (byte) 0));
 		}
 
-		public Stile fillCode(int pos, StringBuilder code) {
+		public Stile fillCode(int pos, CharSequence code) {
 			// TODO: Allow for other processors
 			int x = Point2.x(pos);
 			int y  = Point2.y(pos);
@@ -248,7 +317,6 @@ public class SchemBuilder {
 		}
 
 		public int maxPoints() {
-			// TODO
 			int count = 0;
 			for (int x = 0; x < SchemBuilder.this.width; x++) {
 				for (int y = 0; y < SchemBuilder.this.height; y++) {

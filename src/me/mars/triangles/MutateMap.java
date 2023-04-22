@@ -6,7 +6,6 @@ import arc.math.Mathf;
 import arc.math.geom.Point2;
 import arc.struct.Seq;
 import arc.struct.Sort;
-import arc.util.ArcRuntimeException;
 import arc.util.Log;
 import arc.util.pooling.Pool;
 import me.mars.triangles.shapes.ScanLine;
@@ -32,9 +31,7 @@ public class MutateMap extends Pixmap {
 
 	public MutateMap(Pixmap origin) {
 		super(origin.width, origin.height);
-		// TODO: Fill with dominant color
 		this.origin = origin;
-//		this.Worst_Score = colorDiff2(0, Color.packRgba(255, 255, 255, 255));
 	}
 
 	public int calcColor(int alpha) {

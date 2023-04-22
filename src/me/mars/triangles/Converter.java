@@ -7,7 +7,6 @@ import arc.struct.*;
 import arc.util.Log;
 import arc.util.OS;
 import arc.util.Threads;
-import arc.util.Time;
 import me.mars.triangles.shapes.Shape;
 import mindustry.Vars;
 import mindustry.game.Schematic;
@@ -107,7 +106,6 @@ public class Converter {
 		Schematic schem = new Schematic(outTiles, tags, builder.width, builder.height);
 		schem.labels.add(Core.bundle.get(PicToTri.setting("mod-name")));
 		Vars.schematics.add(schem);
-		// TODO: Proper generator
 	}
 
 	public float totalProgress() {

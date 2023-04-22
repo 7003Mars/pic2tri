@@ -1,6 +1,7 @@
 package me.mars.triangles.shapes;
 
 import arc.math.Rand;
+import arc.util.Strings;
 import me.mars.triangles.Generator;
 import me.mars.triangles.MutateMap;
 
@@ -44,6 +45,10 @@ public class Rectangle extends Shape{
 
 	@Override
 	public String toInstr() {
-		return null;
+		// TODO: This is wrong
+		int w = this.x2 - this.x1;
+		int h = this.y2 - this.y1;
+		return Strings.format("draw color @ @ @ @ 0 0\ndraw rect @ @ @ @ 0 0\n",
+				this.r, this.g, this.b, this.a, this.x1, this.y1, w, h);
 	}
 }

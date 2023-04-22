@@ -16,6 +16,8 @@ public class Options extends Table {
 	Slider acc = new Slider(0, 0.99f, 0.001f, false);
 	Slider procs = new Slider(0, 0, 1f, false);
 
+	private static final int Max_Procs = Math.min(SchemBuilder.fitProcs(10000), 29);
+
 	public Options(ConverterDialog dialog) {
 		this.dialog = dialog;
 		this.addCaptureListener(new ChangeListener() {
@@ -45,25 +47,16 @@ public class Options extends Table {
 			this.procs.setValue(selected.getProcs((int) this.procs.getValue()));
 			this.suppress = false;
 		});
-//		this.procs.keyDown(keyCode -> {
-//			int curVal = (int) this.procs.getValue();
-//			if (keyCode == KeyCode.left) {
-//				this.procs.setValue(curVal-1);
-//			} else if (keyCode == KeyCode.right) {
-//				this.procs.setValue(curVal+1);
-//			}
-//		});
 		this.add(procs);
 	}
 
 	public void updateFields() {
-		// TODO: Get free space from Fill
 		this.suppress = true;
 		if (dialog.selectedOpt == null) {
 			this.procs.setRange(0f, 0f);
 		} else {
 			SchemBuilder.Display selected = (SchemBuilder.Display) dialog.selectedOpt;
-			this.procs.setRange(0, Math.min(selected.maxPoints(), 10000/SchemBuilder.Max_Shapes));
+			this.procs.setRange(0, Math.min(selected.maxPoints(), Max_Procs));
 			this.procs.setValue(selected.points.size);
 			this.acc.setValue(this.dialog.selectedOpt.targetAcc);
 		}

@@ -34,6 +34,7 @@ public class FillShape extends Shape{
 
 	@Override
 	public String toInstr() {
-		return Strings.format("draw clear @ @ @ 0 0 0\n", this.r, this.g, this.b);
+		// Instruction padding
+		return Strings.format("print \"Made with PicToTri\"\ndraw clear @ @ @ 0 0 0\n", this.r, this.g, this.b);
 	}
 }
