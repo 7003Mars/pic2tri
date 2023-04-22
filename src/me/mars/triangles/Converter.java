@@ -87,18 +87,26 @@ public class Converter {
 			Log.err("Generators not finished");
 			return;
 		}
-		SchemBuilder builder = this.filler.rebuild();
-		Seq<Stile> outTiles = new Seq<>();
-		for (int i = 0; i < this.tasks.size; i++) {
-			Seq<Shape> shapes;
+		// TODO: Ugly
+		Seq<Seq<Shape>> shapesSeq = new Seq<>();
+		shapesSeq.addAll(this.tasks.map(task -> {
 			try {
-				shapes = this.tasks.get(i).get();
+				return task.get();
 			} catch (InterruptedException ignored) {
-				continue;
 			} catch (ExecutionException e) {
 				Log.err(e);
-				continue;
 			}
+			return new Seq<>();
+		}));
+		// Reduce points required (if possible)
+		for (int index = 0; index < this.generators.size; index++) {
+			this.filler.displays.get(index).getProcs(SchemBuilder.fitProcs(shapesSeq.get(index).size));
+		}
+		SchemBuilder builder = this.filler.rebuild();
+		// Build schematic
+		Seq<Stile> outTiles = new Seq<>();
+		for (int i = 0; i < this.tasks.size; i++) {
+			Seq<Shape> shapes = shapesSeq.get(i);
 			builder.displays.get(i).build(shapes, outTiles, this.display);
 		}
 		StringMap tags = new StringMap();

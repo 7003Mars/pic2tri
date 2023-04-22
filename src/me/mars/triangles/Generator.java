@@ -142,7 +142,6 @@ public class Generator implements Callable<Seq<Shape>> {
 			shape.randomise(this, this.rand);
 			shape.fill(this.mutated);
 			int col = this.mutated.calcColor(this.alpha);
-			// REMOVEME
 			long score = this.mutated.score2(col);
 			if (score > best) {
 				best = score;
