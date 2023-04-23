@@ -286,10 +286,10 @@ public class SchemBuilder {
 //				Log.info("building with size @", stringArray.size);
 				tileArray.add(this.fillCode(pos, String.join("", stringArray)));
 				Core.app.setClipboardText(String.join("", stringArray));
-				tileArray.add(new Stile(display, this.x, this.y, null, (byte) 0));
 				// End, increment index
 				procIndex++;
 			}
+			tileArray.add(new Stile(display, this.x, this.y, null, (byte) 0));
 		}
 
 		private void buildSingle(Seq<Shape> shapes, Seq<Stile> tileArray, LogicDisplay display) {
