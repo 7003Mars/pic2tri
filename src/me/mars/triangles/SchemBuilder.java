@@ -1,6 +1,5 @@
 package me.mars.triangles;
 
-import arc.Core;
 import arc.graphics.Color;
 import arc.math.Mathf;
 import arc.math.geom.Geometry;
@@ -29,6 +28,8 @@ public class SchemBuilder {
 			.map(line -> line+"\n").toArray(String.class);
 
 	private static final String repeat = """
+			set t @tick
+			jump $ equal t @tick
 			set t @tick
 			jump $ equal t @tick
 			""";
@@ -231,16 +232,16 @@ public class SchemBuilder {
 			done:
 			while (true) {
 				int remaining = shapes.size - shapeCount;
-				int maxObtain = Mathf.ceilPositive((float)remaining/this.points.size);
-				maxObtain = Math.min(maxObtain, 128);
+				int max = Mathf.ceilPositive((float)remaining/this.points.size);
+				max = Math.min(max, 128);
 				for (Seq<Shape> procShapes: shapeMapping.values()) {
-					int c = 0;
+					int i = 0;
 					// TODO: horrible code everywhere, refactor pls
-					while (c < maxObtain) {
+					while (i < max) {
 						procShapes.add(shapes.get(shapeCount));
 						shapeCount++;
+						i++;
 						if (shapeCount >= shapes.size) break done;
-						c++;
 					}
 				}
 			}
@@ -263,7 +264,6 @@ public class SchemBuilder {
 				stringArray.addAll(codeStartArray);
 				for (int repeat = 0; repeat < procIndex; repeat++) {
 					stringArray.addAll(repeatArray);
-					stringArray.addAll(repeatArray);
 				}
 				// Actual shapes
 				int count = 0;
@@ -272,9 +272,10 @@ public class SchemBuilder {
 					if ((count+1) % 128 == 0 && count != 0 && count != procShapes.size-1) stringArray.add("drawflush display1\n");
 				}
 				// Add padding
-				for (int padCount = 0; padCount < maxFilled-count; padCount++) {
+				int padding = maxFilled-count;
+				for (int i = 0; i < padding; i++) {
 					stringArray.add("print \"Padding\"\n");
-					stringArray.add("print \"Padding\"\n");
+					stringArray.add("print \"Don't remove\"\n");
 				}
 				// Then do the final flush if needed
 				if (count == 1 || count == procShapes.size || count % 128 != 0) stringArray.add("drawflush display1\n");
@@ -283,9 +284,7 @@ public class SchemBuilder {
 					stringArray.set(i, stringArray.get(i).replace("$", String.valueOf(i)));
 				}
 				// Build tiles
-//				Log.info("building with size @", stringArray.size);
 				tileArray.add(this.fillCode(pos, String.join("", stringArray)));
-				Core.app.setClipboardText(String.join("", stringArray));
 				// End, increment index
 				procIndex++;
 			}

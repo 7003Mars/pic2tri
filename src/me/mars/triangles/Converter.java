@@ -105,7 +105,7 @@ public class Converter {
 		SchemBuilder builder = this.filler.rebuild();
 		// Build schematic
 		Seq<Stile> outTiles = new Seq<>();
-		for (int i = 0; i < this.tasks.size; i++) {
+		for (int i = 0; i < shapesSeq.size; i++) {
 			Seq<Shape> shapes = shapesSeq.get(i);
 			builder.displays.get(i).build(shapes, outTiles, this.display);
 		}
