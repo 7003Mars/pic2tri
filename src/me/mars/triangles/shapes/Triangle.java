@@ -5,8 +5,8 @@ import arc.math.Rand;
 import arc.math.geom.Point2;
 import arc.util.Strings;
 import arc.util.Structs;
-import me.mars.triangles.MutateMap;
 import me.mars.triangles.Generator;
+import me.mars.triangles.MutateMap;
 
 
 public class Triangle extends Shape{
@@ -94,7 +94,6 @@ public class Triangle extends Shape{
 		Point2 p2 = pixmap.pointPool.obtain().set(this.x2, this.y2);
 		Point2 p3 = pixmap.pointPool.obtain().set(this.x3, this.y3);
 		Point2[] p = {p1, p2, p3};
-//		Point2[] p = {new Point2(this.x1, this.y1), new Point2(this.x2, this.y2), new Point2(this.x3, this.y3)};
 		pixmap.sort.sort(p, Structs.comparingInt(point2 -> point2.y));
 		if (p[0].y == p[1].y) {
 			// point[2] is the highest
@@ -120,6 +119,11 @@ public class Triangle extends Shape{
 	 * Fills a flat bottom triangle with y1=y2, y1 < y2 < y3
 	 */
 	private static void fillBotFlat(MutateMap pixmap, int x1, int y1, int x2, int y2, int x3, int y3) {
+		// TODO: The shift translates it to draw instruction coordinates.Figure out why?
+		x1--;
+		x2--;
+		x3--;
+//		Log.info("Bot: (@ ,@), (@, @), (@, @)",x1,y1,x2,y2,x3,y3);
 		float invSlope1 = (x1 - x3) / (float)(y1 - y3);
 		float invSlope2 = (x2 - x3) / (float)(y2 - y3);
 		// REMOVEME
@@ -127,7 +131,7 @@ public class Triangle extends Shape{
 			throw new ArithmeticException("Stinky");
 		}
 		float curX1 = x3, curX2 = x3;
-		for (int scanY = y3; scanY >= y1; scanY--) {
+		for (int scanY = y3-1; scanY >= y1; scanY--) {
 			pixmap.mark(pixmap.obtainLine().set((int)curX1,(int) curX2, scanY));
 			curX1-=invSlope1;
 			curX2-=invSlope2;
@@ -138,6 +142,11 @@ public class Triangle extends Shape{
 	 * Fills a flat top triangle with y2=y3, y1 < y2 < y3
 	 */
 	private static void fillTopFlat(MutateMap pixmap, int x1, int y1, int x2, int y2, int x3, int y3, boolean skipTop) {
+		// TODO: Don't forget here too
+		x1--;
+		x2--;
+		x3--;
+//		Log.info("Top: (@ ,@), (@, @), (@, @)",x1,y1,x2,y2,x3,y3);
 		float invSlope1 = (x1 - x2) / (float)(y1 - y2);
 		float invSlope2 = (x1 - x3) / (float)(y1 - y3);
 		if (Float.isInfinite(invSlope1) || Float.isInfinite(invSlope2)) {
@@ -145,7 +154,7 @@ public class Triangle extends Shape{
 		}
 		float curX1 = x1, curX2 = x1;
 		if (skipTop) y3--;
-		for (int scanY = y1; scanY <= y3; scanY++) {
+		for (int scanY = y1; scanY < y3; scanY++) {
 			pixmap.mark(pixmap.obtainLine().set((int)curX1,(int) curX2, scanY));
 			curX1+=invSlope1;
 			curX2+=invSlope2;
