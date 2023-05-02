@@ -11,7 +11,7 @@ import arc.util.pooling.Pool;
 import me.mars.triangles.shapes.ScanLine;
 
 public class MutateMap extends Pixmap {
-	public final Pixmap origin;
+	public Pixmap origin;
 	private Seq<ScanLine> marks = new Seq<>();
 	public Sort sort = new Sort();
 

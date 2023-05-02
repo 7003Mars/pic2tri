@@ -63,10 +63,10 @@ public class Converter {
 				int xOffset = this.displayRes() * x;
 				int yOffset = this.displayRes() * y;
 				cropped.draw(this.source, xOffset, yOffset, displayRes(), displayRes(), 0, 0, displayRes(), displayRes(), true);
-				Generator generator = new Generator(cropped, this, options.get(y * this.xChunks + x), true);
-				Log.debug("Submitted generator @", generator);
-				this.tasks.add(executor.submit(generator));
-				this.generators.add(generator);
+//				Generator generator = new Generator(cropped, this, options.get(y * this.xChunks + x), true);
+//				Log.debug("Submitted generator @", generator);
+//				this.tasks.add(executor.submit(generator));
+//				this.generators.add(generator);
 			}
 		}
 		this.source.dispose();

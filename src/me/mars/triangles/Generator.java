@@ -17,9 +17,7 @@ import me.mars.triangles.shapes.Triangle;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static me.mars.triangles.MutateMap.red;
-import static me.mars.triangles.MutateMap.green;
-import static me.mars.triangles.MutateMap.blue;
+import static me.mars.triangles.MutateMap.*;
 
 public class Generator implements Callable<Seq<Shape>> {
 	private static final int Max_Age = 250, Shape_Tries = 250;
@@ -35,6 +33,7 @@ public class Generator implements Callable<Seq<Shape>> {
 
 	private Triangle prevState;
 	private final Rand rand;
+	private boolean backgroundReset;
 
 	private @Nullable Fi loadPath;
 	public Pixmap original;
@@ -42,43 +41,40 @@ public class Generator implements Callable<Seq<Shape>> {
 
 	private Seq<Shape> history = new Seq<>();
 
-	public Generator(Pixmap image, Converter parent, GenOpts options, boolean write) {
-		this.alpha = options.alpha;
-		this.targetAcc = options.targetAcc;
-		this.maxGen = options.maxGen;
-		this.rand = new Rand(parent.seed);
+	public Generator(Fi loadPath, MutateMap current, boolean newBg) {
+		// TODO: Config values here.
+		this.alpha = 175;
+		this.targetAcc = 1;
+		this.maxGen = 83;
+		this.rand = new Rand(214);
 		// TODO: Horrible idea storing the shape for rollback but oh well
 		this.prevState = new Triangle();
-
-		if (write) {
-			// TODO: Might need to lock the file?
-			Fi tempFile = Fi.tempFile(Integer.toHexString(this.hashCode()));
-			tempFile.writePng(image);
-			this.loadPath = tempFile;
-			image.dispose();
-		} else {
-			this.original = image;
-			this.mutated = new MutateMap(image);
-		}
+		this.backgroundReset = newBg;
+		this.loadPath = loadPath;
+		this.mutated = current;
 	}
 
 	public void prepare() {
-		int r = 0, g = 0, b = 0;
+		if (!backgroundReset) {
+			this.curRaw = this.mutated.fullDiff();
+			return;
+		}
+		int black = 0, white = 0;
 		for (int x = 0; x < this.original.width; x++) {
 			for (int y = 0; y < this.original.height; y++) {
 				int col = original.getRaw(x, y);
-				r += red(col);
-				g += green(col);
-				b += blue(col);
-
+				int r = red(col)/*, g = green(col), b = blue(col)*/;
+				if (r < 127) {
+					black++;
+				} else {
+					white++;
+				}
 			}
 		}
-		int size = this.original.width * this.original.height;
-		r = Mathf.round((float)r/size);
-		g = Mathf.round((float)g/size);
-		b = Mathf.round((float)b/size);
-		this.mutated.fill(Color.packRgba(r, g, b, 255));
-		history.add(new FillShape(r, g, b));
+		int col = black > white ? Color.blackRgba : Color.whiteRgba;
+		this.mutated.fill(col);
+		int v = black > white ? 0 : 255;
+		history.add(new FillShape(v, v, v));
 		this.curRaw = this.mutated.fullDiff();
 		this.generation.getAndIncrement();
 	}
@@ -93,6 +89,7 @@ public class Generator implements Callable<Seq<Shape>> {
 			// Stop and cleanup if interrupted
 			if (Thread.currentThread().isInterrupted()) {
 				synchronized (this) {
+					Log.warn("Interrupted by something");
 					this.state = GenState.Done;
 					this.original.dispose();
 					this.mutated.dispose();
@@ -126,9 +123,8 @@ public class Generator implements Callable<Seq<Shape>> {
 			this.state = GenState.Done;
 		}
 
-		Log.debug("Generator @ Finished with @/@ shapes", this, history.size, this.maxGen);
-		// TODO: Dispose the mutated pixmap too
-		this.mutated.dispose();
+		Log.info("Generator @ Finished with @/@ shapes, score: @", this, history.size, this.maxGen, this.curRaw);
+//		this.mutated.dispose();
 		this.original.dispose();
 		return this.history;
 	}
@@ -186,13 +182,12 @@ public class Generator implements Callable<Seq<Shape>> {
 
 	@Override
 	public Seq<Shape> call() {
-//		Log.info("I have been summoned");
-		if (this.original == null) {
-			this.original = new Pixmap(loadPath);
-			this.mutated = new MutateMap(this.original);
-			this.loadPath.delete();
-		}
+		this.original = new Pixmap(loadPath);
+		this.mutated.origin = this.original;
+//			this.mutated = new MutateMap(this.original);
+//		Log.info("Loaded @", this.loadPath);
 		this.prepare();
+//		Log.info("Current raw @", this.curRaw);
 		return this.start();
 	}
 

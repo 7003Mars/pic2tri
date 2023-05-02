@@ -73,6 +73,7 @@ public class PicToTri extends Mod {
 		Events.on(EventType.ClientLoadEvent.class, clientLoadEvent -> {
 			debugMode = Core.settings.getBool(setting("debug-mode"));
 			if (debugMode) converterDialog.show();
+			Goof.launch();
 		});
 		// REMOVEME
 //		var builder = new SchemBuilder(1, 1, (int) ((LogicBlock)Blocks.microProcessor).range, Blocks.largeLogicDisplay.size);
@@ -92,12 +93,40 @@ public class PicToTri extends Mod {
 //				shapeSeq.add(r);
 //			}
 //		}
-//		disp.getProcs(SchemBuilder.fitProcs(shapeSeq.size));
+//		disp.getProcs(SchemBuilder.fitProcs(shapeSeq.size+8000));
 //		disp.build(shapeSeq, tiles, (LogicDisplay) Blocks.largeLogicDisplay);
 //		StringMap tags = new StringMap();
 //		tags.put("name", "!test");
 //		Schematic schem = new Schematic(tiles, tags, builder.width, builder.height);
 //		Vars.schematics.add(schem);
+
+//		LogicDisplay display = (LogicDisplay) Blocks.logicDisplay;
+//		Pixmap pixmap = new Pixmap(display.displaySize, display.displaySize);
+//		MutateMap mutate = new MutateMap(pixmap);
+//		mutate.fill(Color.black);
+//		var tri = new Triangle();
+//		tri.x1 = 1;
+//		tri.x2 = 6;
+//		tri.x3 = 10;
+//		tri.y1 = 1;
+//		tri.y2 = 6;
+//		tri.y3 = 1;
+//		tri.fill(mutate);
+//		mutate.apply(Color.packRgba(255, 255, 255, 255));
+//		Pixmaps.flip(mutate);
+//		Core.settings.getDataDirectory().child("pixmapoutr.png").writePng(mutate);
+//		pixmap.dispose();
+//		mutate.dispose();
+//		FrameBuffer buffer = new FrameBuffer(display.displaySize, display.displaySize);
+//		Tmp.m1.set(Draw.proj());
+//		Draw.proj(0, 0, buffer.getWidth(), buffer.getHeight());
+//		buffer.begin(Color.black);
+//		Draw.color(Color.white);
+//		Fill.tri(tri.x1, tri.y1, tri.x2, tri.y2, tri.x3, tri.y3);
+//		Draw.flush();
+//		Fi fi = Core.settings.getDataDirectory().child(Strings.format("buffer-out.png"));
+//		ScreenUtils.saveScreenshot(fi, 0, 0, buffer.getWidth(), buffer.getHeight());
+//		buffer.end();
 	}
 
 	public static String bundle(String name) {
