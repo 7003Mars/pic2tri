@@ -47,8 +47,6 @@ public class Goof {
 			Log.info("@ finished (@, @)", file.nameWithoutExtension(), gen1.acc(), gen2.acc());
 			float acc = gen2.acc();
 			if (acc > gen1.acc() || acc > 0.98) {
-				// REMOVEME: Rm log
-				Log.info("Picked gen 2");
 				best = shapes.get(1);
 				m1.draw(m2);
 			} else {
