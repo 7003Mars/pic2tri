@@ -4,6 +4,7 @@ import arc.files.Fi;
 import arc.graphics.Pixmap;
 import arc.struct.Seq;
 import arc.util.Log;
+import arc.util.OS;
 import arc.util.Threads;
 import me.mars.triangles.shapes.Shape;
 
@@ -15,6 +16,7 @@ import java.util.concurrent.Future;
 public class Goof {
 	static ExecutorService executor = Threads.executor("bruh", 2);
 	public static void main(String[] args) {
+		Log.info("Cores: @", OS.cores);
 //		Log.info(new Fi("").child("gif").absolutePath());
 		Fi gifDir = new Fi("gif");
 		Fi outDir = new Fi("bad-apple-out");

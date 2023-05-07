@@ -3,6 +3,7 @@ package me.mars.triangles;
 import arc.files.Fi;
 import arc.graphics.Color;
 import arc.graphics.Pixmap;
+import arc.graphics.Pixmaps;
 import arc.math.Mathf;
 import arc.math.Rand;
 import arc.math.WindowedMean;
@@ -17,10 +18,10 @@ import me.mars.triangles.shapes.Triangle;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static me.mars.triangles.MutateMap.*;
+import static me.mars.triangles.MutateMap.red;
 
 public class Generator implements Callable<Seq<Shape>> {
-	private static final int Max_Age = 250, Shape_Tries = 250;
+	private static final int Max_Age = 400, Shape_Tries = 500;
 
 	public final int alpha;
 	private GenState state = GenState.Ready;
@@ -178,6 +179,7 @@ public class Generator implements Callable<Seq<Shape>> {
 	@Override
 	public Seq<Shape> call() {
 		this.original = new Pixmap(loadPath);
+		Pixmaps.flip(this.original);
 		this.mutated.origin = this.original;
 //			this.mutated = new MutateMap(this.original);
 //		Log.info("Loaded @", this.loadPath);
