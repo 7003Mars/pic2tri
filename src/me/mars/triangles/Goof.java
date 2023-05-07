@@ -1,6 +1,5 @@
 package me.mars.triangles;
 
-import arc.Core;
 import arc.files.Fi;
 import arc.graphics.Pixmap;
 import arc.struct.Seq;
@@ -15,11 +14,13 @@ import java.util.concurrent.Future;
 
 public class Goof {
 	static ExecutorService executor = Threads.executor("bruh", 2);
-	public static void launch() {
-		Fi gifDir = Core.settings.getDataDirectory().child("gif");
-		Fi outDir = Core.settings.getDataDirectory().child("bad-apple-out");
+	public static void main(String[] args) {
+//		Log.info(new Fi("").child("gif").absolutePath());
+		Fi gifDir = new Fi("gif");
+		Fi outDir = new Fi("bad-apple-out");
+		Log.info("Processing @, output @", gifDir.absolutePath(), outDir.absolutePath());
 		if (!gifDir.exists()) {
-			Log.err("Couldn't find gif folder in data dir");
+			Log.err("Couldn't find gif folder");
 			return;
 		}
 		Seq<Fi> processFiles = gifDir.findAll(f -> f.extEquals("png")).sort(Comparator.comparing(Fi::name));
@@ -57,6 +58,5 @@ public class Goof {
 			String name = file.nameWithoutExtension() + "-out.txt";
 			outDir.child(name).writeString(sb.toString());
 		}
-
 	}
 }

@@ -105,14 +105,9 @@ public class Generator implements Callable<Seq<Shape>> {
 			shape.fill(this.mutated);
 			mutated.apply(Color.packRgba(shape.r, shape.g, shape.b, shape.a));
 			long newRaw = this.mutated.fullDiff();
-			if (PicToTri.debugMode && this.curRaw-newRaw != best) {
-				Log.warn("Off: @ @", curRaw-newRaw, best);
-			}
 			if (newRaw > this.curRaw) {
 				Log.warn("Produced worse image from improvement @: @", best, newRaw-this.curRaw);
 			}
-			if (PicToTri.debugMode && this.generation.get() % 250 == 0) Log.info("@:@ Acc: @",
-					this, this.generation.get(), newRaw);
 			this.curRaw = newRaw;
 			history.add(shape);
 			synchronized (this) {
