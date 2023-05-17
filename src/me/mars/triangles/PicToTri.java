@@ -74,30 +74,6 @@ public class PicToTri extends Mod {
 			debugMode = Core.settings.getBool(setting("debug-mode"));
 			if (debugMode) converterDialog.show();
 		});
-		// REMOVEME
-//		var builder = new SchemBuilder(1, 1, (int) ((LogicBlock)Blocks.microProcessor).range, Blocks.largeLogicDisplay.size);
-//		var tiles = new Seq<Schematic.Stile>();
-//		var disp = builder.displays.get(0);
-//		Color color = new Color();
-//		Seq<Shape> shapeSeq = new Seq<>();
-//		for (int w = 176; w > 0; w-=5) {
-//			color.rand();
-//			for (int y = 0; y < 100; y++) {
-//				Rectangle r = new Rectangle();
-//				r.y1 = y;
-//				r.y2 = y+1;
-//				r.x1 = 0;
-//				r.x2 = w;
-//				r.setColor(color.rgba());
-//				shapeSeq.add(r);
-//			}
-//		}
-//		disp.getProcs(SchemBuilder.fitProcs(shapeSeq.size));
-//		disp.build(shapeSeq, tiles, (LogicDisplay) Blocks.largeLogicDisplay);
-//		StringMap tags = new StringMap();
-//		tags.put("name", "!test");
-//		Schematic schem = new Schematic(tiles, tags, builder.width, builder.height);
-//		Vars.schematics.add(schem);
 	}
 
 	public static String bundle(String name) {
