@@ -13,6 +13,7 @@ import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.game.EventType;
 import mindustry.game.Schematic;
+import mindustry.gen.Icon;
 import mindustry.mod.Mod;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustry.ui.dialogs.SettingsMenuDialog;
@@ -69,6 +70,7 @@ public class PicToTri extends Mod {
 
 		BaseDialog converterDialog = new ConverterDialog();
 		Vars.ui.schematics.buttons.button(bundle("convert"), converterDialog::show);
+		Vars.ui.menufrag.addButton(bundle("convert"), Icon.fileImage, converterDialog::show);
 
 		Events.on(EventType.ClientLoadEvent.class, clientLoadEvent -> {
 			debugMode = Core.settings.getBool(setting("debug-mode"));
