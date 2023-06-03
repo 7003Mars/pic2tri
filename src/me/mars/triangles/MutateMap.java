@@ -152,20 +152,4 @@ public class MutateMap extends Pixmap {
 		this.pointPool.clear();
 		this.linePool.clear();
 	}
-
-	static int red(int col) {
-		return (col >>> 24) & 0xff;
-	}
-
-	static int green(int col) {
-		return (col >>> 16) & 0xff;
-	}
-
-	static int blue(int col) {
-		return (col >>> 8) & 0xff;
-	}
-
-	static int alpha(int col) {
-		return col & 0xff;
-	}
 }
