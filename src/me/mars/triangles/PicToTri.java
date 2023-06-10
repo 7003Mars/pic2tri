@@ -55,6 +55,10 @@ public class PicToTri extends Mod {
 			Core.settings.put(setting("java-loader"), true);
 			Log.warn("Game crashed while loading image, switching to PixmapIO");
 		}
+		Core.settings.defaults(setting("first-run"), false);
+		Core.settings.defaults(setting("debug-mode"), false);
+		Core.settings.defaults(setting("default-seed"), "");
+		Core.settings.defaults(setting("java-loader"), true);
 	}
 
 	@Override
@@ -65,7 +69,7 @@ public class PicToTri extends Mod {
 			t.checkPref(setting("debug-mode"), false, changed -> debugMode = changed);
 			t.pref(new SeedSetting(setting("default-seed")));
 			t.checkPref(setting("java-loader"), false);
-			Core.settings.defaults(setting("default-seed"), "");
+			t.getSettings().add(new HiddenSetting(setting("first-run")));
 		});
 
 		BaseDialog converterDialog = new ConverterDialog();
@@ -116,7 +120,7 @@ class SeedSetting extends SettingsMenuDialog.SettingsTable.Setting {
 
 	@Override
 	public void add(SettingsMenuDialog.SettingsTable table) {
-		TextField field = new TextField("");
+		TextField field = new TextField(Core.settings.getString(this.name));
 		field.setFilter(TextField.TextFieldFilter.digitsOnly);
 		field.changed(() -> Core.settings.put(this.name, field.getText()));
 		Table prefTable = table.table().left().padTop(3f).get();
@@ -125,4 +129,14 @@ class SeedSetting extends SettingsMenuDialog.SettingsTable.Setting {
 		addDesc(prefTable);
 		table.row();
 	}
+}
+
+class HiddenSetting extends SettingsMenuDialog.SettingsTable.Setting {
+
+	public HiddenSetting(String name) {
+		super(name);
+	}
+
+	@Override
+	public void add(SettingsMenuDialog.SettingsTable table) {}
 }
