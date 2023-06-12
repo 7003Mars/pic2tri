@@ -1,20 +1,23 @@
 package me.mars.triangles.ui;
 
+import arc.Core;
 import arc.scene.Element;
 import arc.scene.event.ChangeListener;
 import arc.scene.ui.CheckBox;
 import arc.scene.ui.Slider;
 import arc.scene.ui.layout.Table;
 import arc.util.Strings;
-import me.mars.triangles.PicToTri;
 import me.mars.triangles.SchemBuilder;
+
+import static me.mars.triangles.PicToTri.bundle;
+import static me.mars.triangles.PicToTri.setting;
 
 public class Options extends Table {
 	ConverterDialog dialog;
 
 	private boolean suppress = false;
 
-	CheckBox all = new CheckBox("Select all displays");
+	CheckBox all = new CheckBox(bundle("select-all"));
 
 	Slider acc = new Slider(0, 0.99f, 0.001f, false);
 	Slider procs = new Slider(0, 0, 1f, false);
@@ -44,8 +47,8 @@ public class Options extends Table {
 		});
 		this.add(acc);
 		this.row();
-		this.label(() -> dialog.selectedOpt == null ? PicToTri.bundle("select-display") :
-				"Max shapes: " + dialog.selectedOpt.maxGen);
+		this.label(() -> dialog.selectedOpt == null ? bundle("select-display") :
+				Core.bundle.format(setting("max-shapes"), dialog.selectedOpt.maxGen));
 		this.row();
 		this.procs.changed(() -> {
 			int target = (int)this.procs.getValue();
