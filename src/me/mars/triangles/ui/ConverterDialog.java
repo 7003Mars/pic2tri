@@ -119,6 +119,7 @@ public class ConverterDialog extends BaseDialog {
 		this.configs.nameField.setText(fi.nameWithoutExtension());
 		String seed = Core.settings.getString(setting("default-seed"));
 		this.configs.seedField.setText(seed.isEmpty() ? String.valueOf(Mathf.random(Integer.MAX_VALUE-1)) : seed);
+		this.selectedOpt = null;
 		Log.debug("range of @-@", this.minScl(), this.maxScl());
 	}
 

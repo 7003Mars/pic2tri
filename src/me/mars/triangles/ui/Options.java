@@ -2,6 +2,7 @@ package me.mars.triangles.ui;
 
 import arc.scene.Element;
 import arc.scene.event.ChangeListener;
+import arc.scene.ui.CheckBox;
 import arc.scene.ui.Slider;
 import arc.scene.ui.layout.Table;
 import arc.util.Strings;
@@ -12,6 +13,8 @@ public class Options extends Table {
 	ConverterDialog dialog;
 
 	private boolean suppress = false;
+
+	CheckBox all = new CheckBox("Select all displays");
 
 	Slider acc = new Slider(0, 0.99f, 0.001f, false);
 	Slider procs = new Slider(0, 0, 1f, false);
@@ -28,12 +31,16 @@ public class Options extends Table {
 				}
 			}
 		});
-//		this.top().left();
+		this.add(all);
+		this.row();
 		this.label(() -> "Accuracy:" + Strings.fixed(this.acc.getValue()*100, 1) + "%");
 		this.row();
 		this.acc.changed(() -> {
-			if (dialog.selectedOpt == null) return;
-			dialog.selectedOpt.targetAcc = acc.getValue();
+			if (this.all.isChecked()) {
+				dialog.filler.displays.each(display -> display.targetAcc = acc.getValue());
+			} else if (dialog.selectedOpt != null) {
+				dialog.selectedOpt.targetAcc = acc.getValue();
+			}
 		});
 		this.add(acc);
 		this.row();
@@ -41,11 +48,18 @@ public class Options extends Table {
 				"Max shapes: " + dialog.selectedOpt.maxGen);
 		this.row();
 		this.procs.changed(() -> {
-			if (dialog.selectedOpt == null) return;
-			this.suppress = true;
-			SchemBuilder.Display selected = (SchemBuilder.Display) dialog.selectedOpt;
-			this.procs.setValue(selected.getProcs((int) this.procs.getValue()));
-			this.suppress = false;
+			int target = (int)this.procs.getValue();
+			if (this.all.isChecked()) {
+				for (SchemBuilder.Display display : dialog.filler.displays) {
+					target = Math.min(target, display.getProcs(target));
+				}
+				this.procs.setValue(target);
+			} else if (dialog.selectedOpt !=  null){
+				this.suppress = true;
+				SchemBuilder.Display selected = (SchemBuilder.Display) dialog.selectedOpt;
+				this.procs.setValue(selected.getProcs((int) this.procs.getValue()));
+				this.suppress = false;
+			}
 		});
 		this.add(procs);
 	}

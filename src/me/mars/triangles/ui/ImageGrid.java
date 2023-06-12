@@ -10,7 +10,6 @@ import arc.math.Mathf;
 import arc.math.geom.Point2;
 import arc.math.geom.Vec2;
 import arc.scene.Element;
-import arc.scene.event.ClickListener;
 import arc.scene.event.ElementGestureListener;
 import arc.scene.event.InputEvent;
 import arc.scene.ui.layout.Scl;
@@ -20,6 +19,7 @@ import arc.util.pooling.Pools;
 import me.mars.triangles.PicToTri;
 import me.mars.triangles.SchemBuilder;
 import mindustry.Vars;
+import mindustry.graphics.Pal;
 import mindustry.ui.Fonts;
 
 import static me.mars.triangles.PicToTri.debugMode;
@@ -78,15 +78,11 @@ public class ImageGrid extends Element {
 
 			@Override
 			public boolean keyTyped(InputEvent event, char character) {
-				switch (character) {
-					case 'r' -> {
-						ImageGrid.this.panX = ImageGrid.this.panY = 0f;
-						return true;
-					}
-					default -> {
-						return false;
-					}
+				if (character == 'r') {
+					ImageGrid.this.panX = ImageGrid.this.panY = 0f;
+					return true;
 				}
+				return false;
 			}
 		});
 		if (Vars.mobile) {
@@ -131,7 +127,7 @@ public class ImageGrid extends Element {
 		Lines.rect(ox, oy, scaledSize * dialog.filler.width, scaledSize * dialog.filler.height);
 		if (PicToTri.debugMode) {
 			Fill.rect(this.panX + this.width/2f, this.panY + this.width/2f, scaledSize, scaledSize);
-			Draw.color(Color.yellow);
+			Draw.color(Pal.darkerMetal);
 			for (int x = 0; x < dialog.filler.width; x++) {
 				for (int y = 0; y < dialog.filler.height; y++) {
 					if (dialog.filler.occupied(x, y)) Fill.crect(ox + x*scaledSize, oy + y*scaledSize, scaledSize, scaledSize);
