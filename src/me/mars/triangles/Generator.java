@@ -17,10 +17,6 @@ import me.mars.triangles.shapes.Triangle;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static me.mars.triangles.MutateMap.red;
-import static me.mars.triangles.MutateMap.green;
-import static me.mars.triangles.MutateMap.blue;
-
 public class Generator implements Callable<Seq<Shape>> {
 	private static final int Max_Age = 250, Shape_Tries = 250;
 
@@ -67,9 +63,9 @@ public class Generator implements Callable<Seq<Shape>> {
 		for (int x = 0; x < this.original.width; x++) {
 			for (int y = 0; y < this.original.height; y++) {
 				int col = original.getRaw(x, y);
-				r += red(col);
-				g += green(col);
-				b += blue(col);
+				r += Color.ri(col);
+				g += Color.gi(col);
+				b += Color.bi(col);
 
 			}
 		}

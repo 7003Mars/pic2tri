@@ -13,6 +13,7 @@ import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.game.EventType;
 import mindustry.game.Schematic;
+import mindustry.gen.Icon;
 import mindustry.mod.Mod;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustry.ui.dialogs.SettingsMenuDialog;
@@ -54,6 +55,10 @@ public class PicToTri extends Mod {
 			Core.settings.put(setting("java-loader"), true);
 			Log.warn("Game crashed while loading image, switching to PixmapIO");
 		}
+		Core.settings.defaults(setting("first-run"), false);
+		Core.settings.defaults(setting("debug-mode"), false);
+		Core.settings.defaults(setting("default-seed"), "");
+		Core.settings.defaults(setting("java-loader"), true);
 	}
 
 	@Override
@@ -64,40 +69,17 @@ public class PicToTri extends Mod {
 			t.checkPref(setting("debug-mode"), false, changed -> debugMode = changed);
 			t.pref(new SeedSetting(setting("default-seed")));
 			t.checkPref(setting("java-loader"), false);
-			Core.settings.defaults(setting("default-seed"), "");
+			t.getSettings().add(new HiddenSetting(setting("first-run")));
 		});
 
 		BaseDialog converterDialog = new ConverterDialog();
 		Vars.ui.schematics.buttons.button(bundle("convert"), converterDialog::show);
+		Vars.ui.menufrag.addButton(bundle("convert"), Icon.fileImage, converterDialog::show);
 
 		Events.on(EventType.ClientLoadEvent.class, clientLoadEvent -> {
 			debugMode = Core.settings.getBool(setting("debug-mode"));
 			if (debugMode) converterDialog.show();
 		});
-		// REMOVEME
-//		var builder = new SchemBuilder(1, 1, (int) ((LogicBlock)Blocks.microProcessor).range, Blocks.largeLogicDisplay.size);
-//		var tiles = new Seq<Schematic.Stile>();
-//		var disp = builder.displays.get(0);
-//		Color color = new Color();
-//		Seq<Shape> shapeSeq = new Seq<>();
-//		for (int w = 176; w > 0; w-=5) {
-//			color.rand();
-//			for (int y = 0; y < 100; y++) {
-//				Rectangle r = new Rectangle();
-//				r.y1 = y;
-//				r.y2 = y+1;
-//				r.x1 = 0;
-//				r.x2 = w;
-//				r.setColor(color.rgba());
-//				shapeSeq.add(r);
-//			}
-//		}
-//		disp.getProcs(SchemBuilder.fitProcs(shapeSeq.size));
-//		disp.build(shapeSeq, tiles, (LogicDisplay) Blocks.largeLogicDisplay);
-//		StringMap tags = new StringMap();
-//		tags.put("name", "!test");
-//		Schematic schem = new Schematic(tiles, tags, builder.width, builder.height);
-//		Vars.schematics.add(schem);
 	}
 
 	public static String bundle(String name) {
@@ -138,7 +120,7 @@ class SeedSetting extends SettingsMenuDialog.SettingsTable.Setting {
 
 	@Override
 	public void add(SettingsMenuDialog.SettingsTable table) {
-		TextField field = new TextField("");
+		TextField field = new TextField(Core.settings.getString(this.name));
 		field.setFilter(TextField.TextFieldFilter.digitsOnly);
 		field.changed(() -> Core.settings.put(this.name, field.getText()));
 		Table prefTable = table.table().left().padTop(3f).get();
@@ -147,4 +129,14 @@ class SeedSetting extends SettingsMenuDialog.SettingsTable.Setting {
 		addDesc(prefTable);
 		table.row();
 	}
+}
+
+class HiddenSetting extends SettingsMenuDialog.SettingsTable.Setting {
+
+	public HiddenSetting(String name) {
+		super(name);
+	}
+
+	@Override
+	public void add(SettingsMenuDialog.SettingsTable table) {}
 }

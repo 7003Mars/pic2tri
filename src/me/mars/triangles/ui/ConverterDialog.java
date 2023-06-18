@@ -8,20 +8,22 @@ import arc.graphics.Pixmaps;
 import arc.math.Mathf;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
-import arc.util.*;
+import arc.util.ArcRuntimeException;
+import arc.util.Log;
+import arc.util.Nullable;
+import arc.util.Strings;
 import me.mars.triangles.Converter;
-import me.mars.triangles.SchemBuilder;
 import me.mars.triangles.Generator;
+import me.mars.triangles.SchemBuilder;
 import mindustry.Vars;
-
-import static me.mars.triangles.PicToTri.*;
-import static mindustry.Vars.tilesize;
-import static mindustry.Vars.ui;
-
 import mindustry.content.Blocks;
 import mindustry.ui.dialogs.BaseDialog;
 import mindustry.world.blocks.logic.LogicBlock;
 import mindustry.world.blocks.logic.LogicDisplay;
+
+import static me.mars.triangles.PicToTri.*;
+import static mindustry.Vars.tilesize;
+import static mindustry.Vars.ui;
 
 public class ConverterDialog extends BaseDialog {
 	public LogicDisplay lDisplay = (LogicDisplay) Blocks.largeLogicDisplay;
@@ -47,7 +49,8 @@ public class ConverterDialog extends BaseDialog {
 		this.closeOnBack();
 		this.addCloseButton();
 		// Buttons
-		this.buttons.button(bundle("select"), () -> Vars.platform.showFileChooser(true, "png", (fi) -> {
+		String[] extensions = Core.settings.getBool(setting("java-loader")) ? new String[]{"png"} : new String[]{"jpg", "jpeg", "png"};
+		this.buttons.button(bundle("select"), () -> Vars.platform.showMultiFileChooser((fi) -> {
 			try {
 				if (this.currentLoaded != null) this.currentLoaded.dispose();
 				this.lastSelectedFile = fi;
@@ -55,7 +58,7 @@ public class ConverterDialog extends BaseDialog {
 			} catch (ArcRuntimeException e) {
 				ui.showErrorMessage(bundle("load-fail"));
 			}
-		}));
+		}, extensions));
 		this.buttons.button(bundle("submit"), () -> {
 			if (this.currentLoaded == null) {
 				ui.showInfoToast(bundle("submit-empty"), 5f);
@@ -116,6 +119,7 @@ public class ConverterDialog extends BaseDialog {
 		this.configs.nameField.setText(fi.nameWithoutExtension());
 		String seed = Core.settings.getString(setting("default-seed"));
 		this.configs.seedField.setText(seed.isEmpty() ? String.valueOf(Mathf.random(Integer.MAX_VALUE-1)) : seed);
+		this.selectedOpt = null;
 		Log.debug("range of @-@", this.minScl(), this.maxScl());
 	}
 
