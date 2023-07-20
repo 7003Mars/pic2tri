@@ -100,14 +100,14 @@ public class Triangle extends Shape{
 			fillBotFlat(pixmap, p[0].x, p[0].y, p[1].x, p[1].y, p[2].x, p[2].y);
 		} else if (p[1].y == p[2].y) {
 			// point[0] is the lowest
-			fillTopFlat(pixmap, p[0].x, p[0].y, p[1].x, p[1].y, p[2].x, p[2].y, false);
+			fillTopFlat(pixmap, p[0].x, p[0].y, p[1].x, p[1].y, p[2].x, p[2].y);
 		} else {
 			int x4 = Mathf.round(p[0].x + ((float)(p[1].y - p[0].y) / (float)(p[2].y - p[0].y)) * (p[2].x - p[0].x));
 			int y4 = p[1].y;
 //			Log.info("BotFlat: @ @ @ @ @ @ \n TopFlat: @ @ @ @ @ @", p[1].x, p[1].y, x4, y4, p[2].x, p[2].y,
 //					p[0].x, p[0].y, x4, y4, p[1].x, p[1].y);
 			fillBotFlat(pixmap, p[1].x, p[1].y, x4, y4, p[2].x, p[2].y);
-			fillTopFlat(pixmap, p[0].x, p[0].y, x4, y4, p[1].x, p[1].y, true);
+			fillTopFlat(pixmap, p[0].x, p[0].y, x4, y4, p[1].x, p[1].y);
 		}
 		pixmap.pointPool.free(p1);
 		pixmap.pointPool.free(p2);
@@ -119,20 +119,24 @@ public class Triangle extends Shape{
 	 * Fills a flat bottom triangle with y1=y2, y1 < y2 < y3
 	 */
 	private static void fillBotFlat(MutateMap pixmap, int x1, int y1, int x2, int y2, int x3, int y3) {
-		// TODO: The shift translates it to draw instruction coordinates.Figure out why?
-		x1--;
-		x2--;
-		x3--;
-//		Log.info("Bot: (@ ,@), (@, @), (@, @)",x1,y1,x2,y2,x3,y3);
-		float invSlope1 = (x1 - x3) / (float)(y1 - y3);
-		float invSlope2 = (x2 - x3) / (float)(y2 - y3);
-		// REMOVEME
-		if (Float.isInfinite(invSlope1) || Float.isInfinite(invSlope2)) {
+		if(x1 > x2) {
+			int tmp = x1;
+			x1 = x2;
+			x2 = tmp;
+		}
+//		Log.info("Bottom: (@, @) (@, @) (@, @)", x1, y1, x2, y2, x3, y3);
+		double invSlope1 = (x3 - x1) / (float)(y3 - y1);
+		double invSlope2 = (x3 - x2) / (float)(y3 - y2);
+		if (Double.isInfinite(invSlope1) || Double.isInfinite(invSlope2)) {
 			throw new ArithmeticException("Stinky");
 		}
-		float curX1 = x3, curX2 = x3;
-		for (int scanY = y3-1; scanY >= y1; scanY--) {
-			pixmap.mark(pixmap.obtainLine().set((int)curX1,(int) curX2, scanY));
+		double curX1 = x3, curX2 = x3;
+		for (int scanY = y3; scanY >= y1; scanY--) {
+			// If x2 > 0.5, include the pixel, else discard (-1)
+			// if x1 <= 0.5, include the pixel, else discard (+1)
+			double mark1 = (curX1 - (int) curX1) <= 0 ? curX1 : curX1+1;
+			double mark2 = (curX2 - (int) curX2) > 0 ? curX2 : curX2-1;
+			pixmap.mark(pixmap.obtainLine().set((int) mark1, (int) mark2, scanY));
 			curX1-=invSlope1;
 			curX2-=invSlope2;
 		}
@@ -141,11 +145,13 @@ public class Triangle extends Shape{
 	/**
 	 * Fills a flat top triangle with y2=y3, y1 < y2 < y3
 	 */
-	private static void fillTopFlat(MutateMap pixmap, int x1, int y1, int x2, int y2, int x3, int y3, boolean skipTop) {
-		// TODO: Don't forget here too
-		x1--;
-		x2--;
-		x3--;
+	private static void fillTopFlat(MutateMap pixmap, int x1, int y1, int x2, int y2, int x3, int y3) {
+		if(x2 > x3) {
+			int tmp = x2;
+			x2 = x3;
+			x3 = tmp;
+		}
+
 //		Log.info("Top: (@ ,@), (@, @), (@, @)",x1,y1,x2,y2,x3,y3);
 		float invSlope1 = (x1 - x2) / (float)(y1 - y2);
 		float invSlope2 = (x1 - x3) / (float)(y1 - y3);
@@ -153,9 +159,12 @@ public class Triangle extends Shape{
 			throw new ArithmeticException("Stinky");
 		}
 		float curX1 = x1, curX2 = x1;
-		if (skipTop) y3--;
-		for (int scanY = y1; scanY < y3; scanY++) {
-			pixmap.mark(pixmap.obtainLine().set((int)curX1,(int) curX2, scanY));
+		for (int scanY = y1; scanY <= y3-1; scanY++) {
+			// if x1 <= 0.5, include the pixel, else discard (+1)
+			// If x2 > 0.5, include the pixel, else discard (-1)
+			float mark1 = (curX1 - (int) curX1) <= 0 ? curX1 : curX1+1;
+			float mark2 = (curX2 - (int) curX2) > 0 ? curX2 : curX2-1;
+			pixmap.mark(pixmap.obtainLine().set((int) mark1,(int) mark2, scanY));
 			curX1+=invSlope1;
 			curX2+=invSlope2;
 		}

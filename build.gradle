@@ -1,11 +1,15 @@
-apply plugin: "java"
+//apply plugin: "java"
+
+plugins {
+    id "java"
+}
 
 version '1.0'
 
 targetCompatibility = 8
 sourceCompatibility = JavaVersion.VERSION_16
 
-sourceSets.main.java.srcDirs = ["src", "$buildDir/gen"]
+sourceSets.main.java.srcDirs = ["src"]
 
 repositories{
     mavenCentral()

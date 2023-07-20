@@ -124,6 +124,7 @@ public class Generator implements Callable<Seq<Shape>> {
 
 		Log.debug("Generator @ Finished with @/@ shapes", this, history.size, this.maxGen);
 		// TODO: Dispose the mutated pixmap too
+//		new Fi("gen-"+Mathf.random(1000)+".png").writePng(this.mutated);
 		this.mutated.dispose();
 		this.original.dispose();
 		return this.history;
