@@ -112,7 +112,7 @@ public class PicToTri extends Mod {
 		Pixmaps.flip(map);
 		new Fi("pix-out.png").writePng(map);
 		Log.info("Files are at @", new Fi("here.png"));
-		Core.app.exit();
+//		Core.app.exit();
 
 		Log.info("@ running version: @, with @ threads", internalName,  Vars.mods.getMod(internalName).meta.version, OS.cores);
 		if (!Core.settings.getBoolOnce(setting("first-run"))) addDefaultSchematics();
