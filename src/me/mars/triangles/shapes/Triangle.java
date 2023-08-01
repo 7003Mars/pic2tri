@@ -104,9 +104,13 @@ public class Triangle extends Shape{
 		} else {
 			int x4 = Mathf.round(p[0].x + ((float)(p[1].y - p[0].y) / (float)(p[2].y - p[0].y)) * (p[2].x - p[0].x));
 			int y4 = p[1].y;
+			// REMOVEME: Uncomment now
+//			Log.info("split to (@, @)", x4, y4);
 //			Log.info("BotFlat: @ @ @ @ @ @ \n TopFlat: @ @ @ @ @ @", p[1].x, p[1].y, x4, y4, p[2].x, p[2].y,
 //					p[0].x, p[0].y, x4, y4, p[1].x, p[1].y);
+			// REMOVEME: Map.apply should not be here
 			fillBotFlat(pixmap, p[1].x, p[1].y, x4, y4, p[2].x, p[2].y);
+//			pixmap.apply(Color.red.rgba());
 			fillTopFlat(pixmap, p[0].x, p[0].y, x4, y4, p[1].x, p[1].y);
 		}
 		pixmap.pointPool.free(p1);
@@ -130,12 +134,15 @@ public class Triangle extends Shape{
 		if (Double.isInfinite(invSlope1) || Double.isInfinite(invSlope2)) {
 			throw new ArithmeticException("Stinky");
 		}
-		double curX1 = x3, curX2 = x3;
+		float curX1 = x3, curX2 = x3;
 		for (int scanY = y3; scanY >= y1; scanY--) {
 			// If x2 > 0.5, include the pixel, else discard (-1)
 			// if x1 <= 0.5, include the pixel, else discard (+1)
-			double mark1 = (curX1 - (int) curX1) <= 0 ? curX1 : curX1+1;
-			double mark2 = (curX2 - (int) curX2) > 0 ? curX2 : curX2-1;
+			// TODO: Round or cast to int
+			double mark1 = accurateBounds(x1, y1, x3, y3, (int) curX1, scanY, true);
+
+			double mark2 = accurateBounds(x3, y3, x2, y2, (int) curX2, scanY, false);
+//			if (scanY == 27) Log.info("Y @: @-@, marking @-@", scanY, curX1, curX2, mark1, mark2);
 			pixmap.mark(pixmap.obtainLine().set((int) mark1, (int) mark2, scanY));
 			curX1-=invSlope1;
 			curX2-=invSlope2;
@@ -162,12 +169,59 @@ public class Triangle extends Shape{
 		for (int scanY = y1; scanY <= y3-1; scanY++) {
 			// if x1 <= 0.5, include the pixel, else discard (+1)
 			// If x2 > 0.5, include the pixel, else discard (-1)
-			float mark1 = (curX1 - (int) curX1) <= 0 ? curX1 : curX1+1;
-			float mark2 = (curX2 - (int) curX2) > 0 ? curX2 : curX2-1;
-			pixmap.mark(pixmap.obtainLine().set((int) mark1,(int) mark2, scanY));
+			int mark1 = accurateBounds(x1, y1, x2, y2, (int) curX1, scanY, true);
+			int mark2 = accurateBounds(x3, y3, x1, y1, (int) curX2, scanY, false);
+			pixmap.mark(pixmap.obtainLine().set(mark1, mark2, scanY));
 			curX1+=invSlope1;
 			curX2+=invSlope2;
 		}
+	}
+
+	/**
+	 * P1 is the tail, P2 is the head. Clockwise winding.
+	 * Provided test coordinate will be translated to pixel coordinates
+	 * @return
+	 */
+
+	public static int accurateBounds(int x1, int y1, int x2, int y2, int px, int py, boolean ltr) {
+		/*
+		Basically, the inverse slope is inaccurate. Using the inaccurate x coordinates,
+		we test x-0.5, x+0.5, x+1.5 and pray the more accurate test returns a valid value.
+		If the inaccurate coordinate is >0.5 off, we are dead.
+		Use a for(3) loop, to find how far we can edge the test before it fails. (Depends on ltr/rtl)
+		 */
+		int sign = ltr ? 1 : -1;
+		int x = px - sign;
+		int ax = x2-x1, ay = y2-y1;
+//		Log.info("-> (@, @)", ax, ay);
+		for (int i = 0; i < 3; i++) {
+			float area = ax * (y1-(py+0.5f)) - ay * (x1-(x+0.5f));
+			// x will be 1.5, 2.5, 3.5,...
+			// To get the actual coordinates, just truncate
+//			if (py == 27) Log.info("(@, @) area: @", x+0.5f, py+0.5f, area);
+			if (area == 0 ? (ay > 0 || (ay == 0 && ax < 1)) : area > 0) return x;
+			x+= sign;
+		}
+//		Log.warn("Failed to find x coordinates");
+		return -1;
+//		int sign, rx = -1;
+//		float startX, endX;
+//		if (ltr) {
+//			sign = 1;
+//			startX = px - 0.5f;
+//			endX = px + 0.5f;
+//		} else {
+//			sign = -1;
+//			startX = px + 0.5f;
+//			endX = px - 0.5f;
+//		}
+//		int ax = x2-x1, ay = y2-y1;
+//		for (float x = startX; ltr ? x <= endX : x >= endX; x+=sign) {
+//			float area = ax * (py+0.5f-y1) - ay * (x-x1);
+//			if (area == 0 ? (ay > 0 || (ay == 0 && ax < 1)) : area > 0) rx = (int) (x-0.5f);
+//		}
+//		return rx;
+
 	}
 
 

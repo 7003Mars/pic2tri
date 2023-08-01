@@ -131,11 +131,11 @@ public class MutateMap extends Pixmap {
 	}
 
 	public void mark(ScanLine scanLine) {
-		if (scanLine.y < 0 || scanLine.y >= this.height) {
+		if (scanLine.y < 0 || scanLine.y >= this.height || scanLine.x2 < scanLine.x1) {
 			this.linePool.free(scanLine);
 			return;
 		}
-		if (scanLine.x2 < scanLine.x1) return;
+//		if (scanLine.x2 < scanLine.x1) return;
 		scanLine.x1 = Mathf.clamp(scanLine.x1, 0, this.width-1);
 		scanLine.x2 = Mathf.clamp(scanLine.x2, 0, this.width-1);
 		if (marks.contains(l -> l.y == scanLine.y)) Log.warn("@ already there? For line @", scanLine.y, scanLine);
