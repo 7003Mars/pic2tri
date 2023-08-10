@@ -20,13 +20,21 @@ repositories {
     mavenCentral()
     maven("https://www.jitpack.io")
 }
-val mindustryVersion by extra("v144.3")
+val mindustryVersion by extra("v145.1")
 val jabelVersion by extra("93fde537c7")
 val sdkRoot: String? by extra(System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT"))
 
 allprojects {
     tasks.withType<JavaCompile> {
         options.compilerArgs.addAll(arrayOf("--release", "8"))
+    }
+}
+
+configurations.all{
+    resolutionStrategy.eachDependency {
+        if(this.requested.group == "com.github.Anuken.Arc"){
+            this.useVersion("v145.1")
+        }
     }
 }
 
