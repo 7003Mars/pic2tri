@@ -90,7 +90,7 @@ tasks.register("jarAndroid") {
 }
 
 tasks.named<Jar>("jar") {
-    archiveBaseName.set("${archivesName}Desktop.jar")
+    archiveFileName.set("${archivesName}Desktop.jar")
     val buildVer: String = project.findProperty("modVer") as String? ?: "build-${LocalTime.now()}"
 
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it)})
@@ -104,7 +104,7 @@ tasks.named<Jar>("jar") {
 
 tasks.register<Jar>("deploy") {
     dependsOn("jar", "jarAndroid")
-    archiveBaseName.set("$archivesName.jar")
+    archiveFileName.set("$archivesName.jar")
     from(zipTree("$buildDir/libs/${archivesName}Desktop.jar"), zipTree("$buildDir/libs/${archivesName}Android.jar"))
     doLast {
         delete("$buildDir/libs/${archivesName}Desktop.jar", "$buildDir/libs/${archivesName}Android.jar")
