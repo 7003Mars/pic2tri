@@ -73,8 +73,8 @@ tasks.register("jarAndroid") {
 
 //      collect dependencies needed for desugaring
         val dependencies =
-            (configurations.compileClasspath.get().toList() + configurations.runtimeClasspath.get().toList() + arrayOf(
-                File(platformRoot, "android.jar")
+            (configurations.compileClasspath.get().toList() + configurations.runtimeClasspath.get().toList() +
+                    arrayOf(File(platformRoot, "android.jar")
             )).joinToString(" ") { "--classpath ${it.path}" }
 //      dex and desugar files - this requires d8 in your PATH
         val err = ByteArrayOutputStream()
@@ -90,6 +90,7 @@ tasks.register("jarAndroid") {
 }
 
 tasks.named<Jar>("jar") {
+    archiveBaseName.set("${archivesName}Desktop.jar")
     val buildVer: String = project.findProperty("modVer") as String? ?: "build-${LocalTime.now()}"
 
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it)})
@@ -103,6 +104,7 @@ tasks.named<Jar>("jar") {
 
 tasks.register<Jar>("deploy") {
     dependsOn("jar", "jarAndroid")
+    archiveBaseName.set("$archivesName.jar")
     from(zipTree("$buildDir/libs/${archivesName}Desktop.jar"), zipTree("$buildDir/libs/${archivesName}Android.jar"))
     doLast {
         delete("$buildDir/libs/${archivesName}Desktop.jar", "$buildDir/libs/${archivesName}Android.jar")
