@@ -69,7 +69,7 @@ tasks.named<Jar>("jar") {
     }
 }
 
-tasks.named<Jar>("deploy") {
+tasks.register<Jar>("deploy") {
     dependsOn("jar", "jarAndroid")
     from(zipTree("$buildDir/libs/${base.archivesName}Desktop.jar"), zipTree("$buildDir/libs/${base.archivesName}Android.jar"))
     doLast {
