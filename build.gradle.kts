@@ -40,7 +40,7 @@ configurations.all{
 
 dependencies {
     compileOnly("com.github.Anuken.Arc:arc-core:$mindustryVersion")
-    compileOnly("com.github.Anuken.mindustryjitpack:core:$mindustryVersion")
+    compileOnly("com.github.Anuken.mindustry:core:$mindustryVersion")
     annotationProcessor("com.github.Anuken:jabel:$jabelVersion")
 }
 
