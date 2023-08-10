@@ -55,6 +55,8 @@ dependencies {
     annotationProcessor("com.github.Anuken:jabel:$jabelVersion")
 
     testImplementation("com.github.Anuken.Arc:arc-core:$mindustryVersion")
+    testImplementation("com.github.Anuken.arc:backend-sdl:$mindustryVersion")
+    testImplementation("com.github.Anuken.arc:natives-desktop:$mindustryVersion")
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
@@ -76,12 +78,14 @@ tasks.register("jarAndroid") {
             )).joinToString(" ") { "--classpath ${it.path}" }
 //      dex and desugar files - this requires d8 in your PATH
         val err = ByteArrayOutputStream()
-        exec {
+        val res = exec {
             commandLine("d8 $dependencies --min-api 14 --output ${archivesName}Android.jar ${archivesName}Desktop.jar")
             workingDir = File("$buildDir/libs")
             errorOutput = err
+            isIgnoreExitValue = true
         }
         println("Errors: $err")
+        res.assertNormalExitValue()
     }
 }
 
