@@ -74,11 +74,13 @@ tasks.register("jarAndroid") {
                 File(platformRoot, "android.jar")
             )).joinToString(" ") { "--classpath ${it.path}" }
 //      dex and desugar files - this requires d8 in your PATH
+        val err = ByteArrayOutputStream()
         exec {
             commandLine("d8 $dependencies --min-api 14 --output ${archivesName}Android.jar ${archivesName}Desktop.jar")
             workingDir = File("$buildDir/libs")
-            errorOutput = System.err
+            errorOutput = err
         }
+        println("Errors: $err")
     }
 }
 
