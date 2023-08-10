@@ -77,6 +77,7 @@ tasks.register("jarAndroid") {
         exec {
             commandLine("d8 $dependencies --min-api 14 --output ${archivesName}Android.jar ${archivesName}Desktop.jar")
             workingDir = File("$buildDir/libs")
+            errorOutput = System.err
         }
     }
 }
