@@ -72,7 +72,7 @@ tasks.register("jarAndroid") {
         val dependencies =
             (configurations.compileClasspath.get().toList() + configurations.runtimeClasspath.get().toList() + arrayOf(
                 File(platformRoot, "android.jar")
-            )).joinToString(" ") { "--classpath $it.path" }
+            )).joinToString(" ") { "--classpath ${it.path}" }
 //      dex and desugar files - this requires d8 in your PATH
         exec {
             commandLine("d8 $dependencies --min-api 14 --output ${archivesName}Android.jar ${archivesName}Desktop.jar")
