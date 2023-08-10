@@ -55,7 +55,7 @@ tasks.register("jarAndroid") {
         if(platformRoot == null) throw GradleException("No android.jar found. Ensure that you have an Android platform installed.")
 
 //      collect dependencies needed for desugaring
-        val dependencies = configurations.compileClasspath.get().toList() + configurations.runtimeClasspath.get().toList() + arrayOf(File(platformRoot, "android.jar")).map{ "--classpath $it.path" }.joinToString(" ")
+        val dependencies = (configurations.compileClasspath.get().toList() + configurations.runtimeClasspath.get().toList() + arrayOf(File(platformRoot, "android.jar")).map{ "--classpath $it.path" }).joinToString(" ")
 //      dex and desugar files - this requires d8 in your PATH
         exec {
             commandLine("d8 $dependencies --min-api 14 --output ${base.archivesName}Android.jar ${base.archivesName}Desktop.jar")
