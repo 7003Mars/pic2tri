@@ -64,7 +64,6 @@ dependencies {
 tasks.register("jarAndroid") {
     dependsOn("jar")
     doLast{
-
         if(sdkRoot == null || !File(sdkRoot!!).exists()) throw GradleException("No valid Android SDK found. Ensure that ANDROID_HOME is set to your Android SDK directory.")
 
         val platformRoot = File("$sdkRoot/platforms/").listFiles()?.also { it.sort(); it.reverse() }?.find { File(it, "android.jar").exists()}
@@ -79,12 +78,12 @@ tasks.register("jarAndroid") {
 //      dex and desugar files - this requires d8 in your PATH
         val err = ByteArrayOutputStream()
         val res = exec {
-            commandLine("d8 $dependencies --min-api 14 --output ${archivesName}Android.jar ${archivesName}Desktop.jar")
+            commandLine("d8 $dependencies --min-api 14 --output ${archivesName}Android.jar ${archivesName}Desktop.jar".split(" "))
             workingDir = File("$buildDir/libs")
             errorOutput = err
             isIgnoreExitValue = true
         }
-        println("Errors: $err")
+        logger.warn("Errors: $err")
         res.assertNormalExitValue()
     }
 }
