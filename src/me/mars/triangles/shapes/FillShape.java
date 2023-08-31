@@ -23,7 +23,7 @@ public class FillShape extends Shape{
 	}
 
 	@Override
-	protected boolean invalid() {
+	public boolean invalid() {
 		throw new UnsupportedOperationException();
 	}
 

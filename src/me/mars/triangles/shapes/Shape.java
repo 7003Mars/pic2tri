@@ -9,7 +9,7 @@ public abstract class Shape {
 
 	public abstract void randomise(Generator context, Rand rand);
 	public abstract void mutate(Generator context, Rand rand);
-	protected abstract boolean invalid();
+	public abstract boolean invalid();
 	public void set(Shape other) {
 		this.r = other.r;
 		this.g = other.g;

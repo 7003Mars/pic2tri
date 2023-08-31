@@ -3,6 +3,7 @@ import java.time.LocalTime
 
 plugins {
     java
+    kotlin("jvm") version "1.9.0"
 }
 
 version = "1.0"
@@ -22,12 +23,16 @@ sourceSets {
         java {
             srcDirs("test")
         }
+        kotlin {
+            srcDirs("test")
+        }
     }
 }
 
 repositories {
     mavenCentral()
     maven("https://www.jitpack.io")
+    maven("https://maven.xpdustry.com/anuken")
 }
 val mindustryVersion by extra("v145.1")
 val jabelVersion by extra("93fde537c7")
@@ -41,22 +46,23 @@ allprojects {
     }
 }
 
-configurations.all{
-    resolutionStrategy.eachDependency {
-        if(this.requested.group == "com.github.Anuken.Arc"){
-            this.useVersion("v145.1")
-        }
-    }
-}
+//configurations.all{
+//    resolutionStrategy.eachDependency {
+//        if(this.requested.group == "com.github.Anuken.Arc"){
+//            this.useVersion("v145.1")
+//        }
+//    }
+//}
 
 dependencies {
     compileOnly("com.github.Anuken.Arc:arc-core:$mindustryVersion")
     compileOnly("com.github.anuken.mindustry:core:$mindustryVersion")
     annotationProcessor("com.github.Anuken:jabel:$jabelVersion")
 
+    testImplementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.0")
     testImplementation("com.github.Anuken.Arc:arc-core:$mindustryVersion")
     testImplementation("com.github.Anuken.arc:backend-sdl:$mindustryVersion")
-    testImplementation("com.github.Anuken.arc:natives-desktop:$mindustryVersion")
+    testRuntimeOnly("com.github.Anuken.arc:natives-desktop:4be3d22cf6")
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
@@ -111,5 +117,6 @@ tasks.register<Jar>("deploy") {
 }
 
 tasks.named<Test>("test") {
+    jvmArgs("-XstartOnFirstThread")
     useJUnitPlatform()
 }

@@ -43,7 +43,7 @@ public class Rectangle extends Shape{
 	}
 
 	@Override
-	protected boolean invalid() {
+	public boolean invalid() {
 		return this.y1 == this.y2 || this.x1 == this.x2;
 	}
 
