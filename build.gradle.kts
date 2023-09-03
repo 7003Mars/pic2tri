@@ -46,13 +46,13 @@ allprojects {
     }
 }
 
-//configurations.all{
-//    resolutionStrategy.eachDependency {
-//        if(this.requested.group == "com.github.Anuken.Arc"){
-//            this.useVersion("v145.1")
-//        }
-//    }
-//}
+configurations.all{
+    resolutionStrategy.eachDependency {
+        if(this.requested.group == "com.github.Anuken.Arc"){
+            this.useVersion("v145.1")
+        }
+    }
+}
 
 dependencies {
     compileOnly("com.github.Anuken.Arc:arc-core:$mindustryVersion")
