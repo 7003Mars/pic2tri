@@ -3,6 +3,8 @@ package me.mars.triangles.shapes;
 import arc.math.Mathf;
 import arc.math.Rand;
 import arc.math.geom.Point2;
+import arc.math.geom.Vec2;
+import arc.util.Log;
 import arc.util.Strings;
 import arc.util.Structs;
 import me.mars.triangles.Generator;
@@ -10,8 +12,6 @@ import me.mars.triangles.MutateMap;
 
 
 public class Triangle extends Shape{
-	// REMOVEME
-//	public static int a1Fail = 0, a2Fail = 0, a3Fail = 0;
 	private static final int maxOut = 16;
 	private static final int max = 20;
 
@@ -81,10 +81,11 @@ public class Triangle extends Shape{
 	}
 
 	@Override
-	protected boolean invalid() {
+	public boolean invalid() {
 		// TODO: Fix this entire function
 //		return false;
-		return (this.x1 == this.x2 || this.x2 == this.x3 || this.x1 == this.x3) || (this.y1 == this.y2 || this.y2 == this.y3 ||this.y1 == this.y3);
+		if ((this.x1 == this.x2 && this.x2 == this.x3) || (this.y1 == this.y2 && this.y2 == this.y3)) return true;
+		return (this.x1 == this.x2 && this.y1 == this.y2) || (this.x2 == this.x3 && this.y2 == this.y3) || (this.x3 == this.x1 && this.y3 == this.y1);
 	}
 
 	@Override
@@ -97,21 +98,50 @@ public class Triangle extends Shape{
 		pixmap.sort.sort(p, Structs.comparingInt(point2 -> point2.y));
 		if (p[0].y == p[1].y) {
 			// point[2] is the highest
-			fillBotFlat(pixmap, p[0].x, p[0].y, p[1].x, p[1].y, p[2].x, p[2].y);
+			int x1 = p[0].x, x2 = p[1].x, hx = p[2].x, y1 = p[0].y, hy = p[2].y;
+			if (x1 > x2) {
+				int tmp = x2;
+				x2 = x1;
+				x1 = tmp;
+			}
+			Vec2 left = new Vec2(hx - x1, hy - y1), right = new Vec2(x2 - hx, y1 - hy);
+			// REMOVEME: remove asserts
+			assert left.y >= 0;
+			assert right.y <= 0;
+			Log.info("vecs are @, @", left, right);
+			fillBotFlat(pixmap, hx, hy, y1, left, right, x1, y1);
 		} else if (p[1].y == p[2].y) {
 			// point[0] is the lowest
-			fillTopFlat(pixmap, p[0].x, p[0].y, p[1].x, p[1].y, p[2].x, p[2].y);
+			int x1 = p[1].x, x2 = p[2].x, lx = p[0].x, y1 = p[1].y, ly = p[0].y;
+			if (x1 > x2) {
+				int tmp = x2;
+				x2 = x1;
+				x1 = tmp;
+			}
+			Vec2 left = new Vec2(x1 - lx, y1 - ly), right = new Vec2(lx - x2, ly - y1);
+			// REMOVEME: remove asserts
+			assert left.y >= 0;
+			assert right.y <= 0;
+			Log.warn("vecs are @, @", left, right);
+			fillTopFlat(pixmap, lx, ly, y1, left, right, x2, y1);
 		} else {
-			int x4 = Mathf.round(p[0].x + ((float)(p[1].y - p[0].y) / (float)(p[2].y - p[0].y)) * (p[2].x - p[0].x));
-			int y4 = p[1].y;
-			// REMOVEME: Uncomment now
-//			Log.info("split to (@, @)", x4, y4);
-//			Log.info("BotFlat: @ @ @ @ @ @ \n TopFlat: @ @ @ @ @ @", p[1].x, p[1].y, x4, y4, p[2].x, p[2].y,
-//					p[0].x, p[0].y, x4, y4, p[1].x, p[1].y);
-			// REMOVEME: Map.apply should not be here
-			fillBotFlat(pixmap, p[1].x, p[1].y, x4, y4, p[2].x, p[2].y);
-//			pixmap.apply(Color.red.rgba());
-			fillTopFlat(pixmap, p[0].x, p[0].y, x4, y4, p[1].x, p[1].y);
+			// p[0] is the lowest, p[2] is the highest, p[1] and (x2,  y1) are in between
+			int lx = p[0].x, ly = p[0].y, hx = p[2].x, hy = p[2].y, x1 = p[1].x, y1 = p[1].y;
+			double x2 = (p[0].x + ((double)(p[1].y - p[0].y) / (double) (p[2].y - p[0].y)) * (p[2].x - p[0].x));
+			if (x2 == x1) throw new RuntimeException("Unsure what to do");
+			if (x2 > x1) {
+				// Right side is straight
+				Vec2 right = new Vec2(lx - hx, ly - hy);
+				Vec2 botLeft = new Vec2(x1 - lx, y1 - ly), topLeft = new Vec2(hx - x1, hy - y1);
+				fillBotFlat(pixmap, hx, hy, y1, topLeft, right, x1, y1);
+				fillTopFlat(pixmap, lx, ly, y1, botLeft, right, hx, hy);
+			} else {
+				// Left side is straight
+				Vec2 left = new Vec2(hx - lx, hy - ly);
+				Vec2 botRight = new Vec2(lx - x1, ly - y1), topRight = new Vec2(x1 - hx, y1 - hy);
+				fillBotFlat(pixmap, hx, hy, y1, left, topRight, lx, ly);
+				fillTopFlat(pixmap, lx, ly, y1, left, botRight, x1, y1);
+			}
 		}
 		pixmap.pointPool.free(p1);
 		pixmap.pointPool.free(p2);
@@ -120,108 +150,74 @@ public class Triangle extends Shape{
 	}
 
 	/**
-	 * Fills a flat bottom triangle with y1=y2, y1 < y2 < y3
+	 *
+	 * @param startX Lowest point
+	 * @param startY Lowest point
+	 * @param endY Highest point
+	 * @param rx Reference point for right vector
+	 * @param ry Reference point for right vector
 	 */
-	private static void fillBotFlat(MutateMap pixmap, int x1, int y1, int x2, int y2, int x3, int y3) {
-		if(x1 > x2) {
-			int tmp = x1;
-			x1 = x2;
-			x2 = tmp;
-		}
-//		Log.info("Bottom: (@, @) (@, @) (@, @)", x1, y1, x2, y2, x3, y3);
-		double invSlope1 = (x3 - x1) / (float)(y3 - y1);
-		double invSlope2 = (x3 - x2) / (float)(y3 - y2);
-		if (Double.isInfinite(invSlope1) || Double.isInfinite(invSlope2)) {
-			throw new ArithmeticException("Stinky");
-		}
-		float curX1 = x3, curX2 = x3;
-		for (int scanY = y3; scanY >= y1; scanY--) {
-			// If x2 > 0.5, include the pixel, else discard (-1)
-			// if x1 <= 0.5, include the pixel, else discard (+1)
-			// TODO: Round or cast to int
-			double mark1 = accurateBounds(x1, y1, x3, y3, (int) curX1, scanY, true);
-
-			double mark2 = accurateBounds(x3, y3, x2, y2, (int) curX2, scanY, false);
-//			if (scanY == 27) Log.info("Y @: @-@, marking @-@", scanY, curX1, curX2, mark1, mark2);
-			pixmap.mark(pixmap.obtainLine().set((int) mark1, (int) mark2, scanY));
-			curX1-=invSlope1;
-			curX2-=invSlope2;
-		}
-	}
-
-	/**
-	 * Fills a flat top triangle with y2=y3, y1 < y2 < y3
-	 */
-	private static void fillTopFlat(MutateMap pixmap, int x1, int y1, int x2, int y2, int x3, int y3) {
-		if(x2 > x3) {
-			int tmp = x2;
-			x2 = x3;
-			x3 = tmp;
-		}
-
-//		Log.info("Top: (@ ,@), (@, @), (@, @)",x1,y1,x2,y2,x3,y3);
-		float invSlope1 = (x1 - x2) / (float)(y1 - y2);
-		float invSlope2 = (x1 - x3) / (float)(y1 - y3);
+	private static void fillTopFlat(MutateMap pixmap, int startX, int startY, int endY, Vec2 left, Vec2 right, int rx, int ry) {
+		float invSlope1 = left.x / left.y, invSlope2 = right.x / right.y;
 		if (Float.isInfinite(invSlope1) || Float.isInfinite(invSlope2)) {
 			throw new ArithmeticException("Stinky");
 		}
-		float curX1 = x1, curX2 = x1;
-		for (int scanY = y1; scanY <= y3-1; scanY++) {
-			// if x1 <= 0.5, include the pixel, else discard (+1)
-			// If x2 > 0.5, include the pixel, else discard (-1)
-			int mark1 = accurateBounds(x1, y1, x2, y2, (int) curX1, scanY, true);
-			int mark2 = accurateBounds(x3, y3, x1, y1, (int) curX2, scanY, false);
-			pixmap.mark(pixmap.obtainLine().set(mark1, mark2, scanY));
-			curX1+=invSlope1;
-			curX2+=invSlope2;
+		float x1 = startX, x2 = startX;
+		x1+= invSlope1/2f;
+		x2+= invSlope2/2f;
+		for (int scanY = startY; scanY < endY; scanY++) {
+			int mark1 = accurateBounds(Mathf.floor(x1), scanY, left, true, startX, startY);
+			int mark2 = accurateBounds(Mathf.ceil(x2), scanY, right, false, rx, ry);
+			ScanLine line = pixmap.obtainLine().set(mark1, mark2, scanY);
+			pixmap.mark(line);
+			x1+= invSlope1;
+			x2+= invSlope2;
+
 		}
+
 	}
 
 	/**
-	 * P1 is the tail, P2 is the head. Clockwise winding.
-	 * Provided test coordinate will be translated to pixel coordinates
-	 * @return
+	 *
+	 * @param startX Highest point
+	 * @param startY Highest point
+	 * @param endY Lowest point
+	 * @param left Lowest point
+	 * @param rx Reference point for left vector
+	 * @param ry Reference point for left vector
 	 */
+	private static void fillBotFlat(MutateMap pixmap, int startX, int startY, int endY, Vec2 left, Vec2 right, int rx, int ry) {
+		float invSlope1 = left.x / left.y, invSlope2 = right.x / right.y;
+		if (Float.isInfinite(invSlope1) || Float.isInfinite(invSlope2)) {
+			throw new ArithmeticException("Stinky");
+		}
+		float x1 = startX, x2 = startX;
+		x1+= invSlope1/2f;
+		x2+= invSlope2/2f;
+		for (int scanY = startY; scanY >= endY; scanY--) {
+			int mark1 = accurateBounds(Mathf.floor(x1), scanY, left, true, rx, ry);
+			int mark2 = accurateBounds(Mathf.ceil(x2), scanY, right, false, startX, startY);
+			ScanLine line = pixmap.obtainLine().set(mark1, mark2, scanY);
+			pixmap.mark(line);
+			x1-= invSlope1;
+			x2-= invSlope2;
+		}
+	}
 
-	public static int accurateBounds(int x1, int y1, int x2, int y2, int px, int py, boolean ltr) {
-		/*
-		Basically, the inverse slope is inaccurate. Using the inaccurate x coordinates,
-		we test x-0.5, x+0.5, x+1.5 and pray the more accurate test returns a valid value.
-		If the inaccurate coordinate is >0.5 off, we are dead.
-		Use a for(3) loop, to find how far we can edge the test before it fails. (Depends on ltr/rtl)
-		 */
+	public static int accurateBounds(int x, int y, Vec2 vec, boolean ltr, int rx, int ry) {
+		Vec2 pv = new Vec2();
 		int sign = ltr ? 1 : -1;
-		int x = px - sign;
-		int ax = x2-x1, ay = y2-y1;
-//		Log.info("-> (@, @)", ax, ay);
-		for (int i = 0; i < 3; i++) {
-			float area = ax * (y1-(py+0.5f)) - ay * (x1-(x+0.5f));
-			// x will be 1.5, 2.5, 3.5,...
-			// To get the actual coordinates, just truncate
-//			if (py == 27) Log.info("(@, @) area: @", x+0.5f, py+0.5f, area);
-			if (area == 0 ? (ay > 0 || (ay == 0 && ax < 1)) : area > 0) return x;
+		for (int i = 0; i < 4; i++) {
+			pv.set(x+0.5f-rx, y+0.5f-ry);
+//			float area = vec.crs(x+0.5f-rx, y+0.5f-ry);
+			float area = pv.crs(vec);
+			if (area == 0 ? (vec.y > 0 || (vec.y == 0 && vec.x > 0)) : area > 0) {
+				return x;
+			}
 			x+= sign;
 		}
-//		Log.warn("Failed to find x coordinates");
-		return -1;
-//		int sign, rx = -1;
-//		float startX, endX;
-//		if (ltr) {
-//			sign = 1;
-//			startX = px - 0.5f;
-//			endX = px + 0.5f;
-//		} else {
-//			sign = -1;
-//			startX = px + 0.5f;
-//			endX = px - 0.5f;
-//		}
-//		int ax = x2-x1, ay = y2-y1;
-//		for (float x = startX; ltr ? x <= endX : x >= endX; x+=sign) {
-//			float area = ax * (py+0.5f-y1) - ay * (x-x1);
-//			if (area == 0 ? (ay > 0 || (ay == 0 && ax < 1)) : area > 0) rx = (int) (x-0.5f);
-//		}
-//		return rx;
-
+		Log.warn("Failed to find accurate bounds for (@, @) Ltr: @", x, y, ltr);
+		return Integer.MIN_VALUE;
 	}
 
 
@@ -244,5 +240,11 @@ public class Triangle extends Shape{
 				", x3=" + x3 +
 				", y3=" + y3 +
 				'}';
+	}
+
+	static int roundTo(float x, float dir) {
+		if (x == 0) return 0;
+		if (dir == 0) return Math.round(x);
+		return (dir > 0) ? Mathf.ceil(x) : Mathf.floor(x);
 	}
 }
