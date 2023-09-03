@@ -238,9 +238,9 @@ public class Triangle extends Shape{
 				'}';
 	}
 
-	static int roundTo(float x, float dir) {
-		if (x == 0) return 0;
-		if (dir == 0) return Math.round(x);
-		return (dir > 0) ? Mathf.ceil(x) : Mathf.floor(x);
-	}
+//	static int roundTo(float x, float dir) {
+//		if (x == 0) return 0;
+//		if (dir == 0) return Math.round(x);
+//		return (dir > 0) ? Mathf.ceil(x) : Mathf.floor(x);
+//	}
 }

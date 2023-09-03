@@ -32,53 +32,34 @@ import org.junit.jupiter.api.assertDoesNotThrow
 
 class RasteriserTest {
 
-    @RepeatedTest(10)
-    fun death(info: RepetitionInfo) {
+    @Test
+    fun death() {
         val rand: Rand = Rand()
         val tri: Triangle = Triangle()
         val w = 250
         val h = 250
         val bx = w-1
         val by = h-1
-        with(rand) {
-            do {
-                tri.x1 = random(bx)
-                tri.y1 = random(by)
-                tri.x2 = random(bx)
-                tri.y2 = random(by)
-                tri.x3 = random(bx)
-                tri.y3 = random(by)
-            } while (tri.invalid())
-        }
-        val config: SdlConfig = object : SdlConfig() {
-            init {
-                disableAudio = true
-                initialVisible = false
-                initialBackgroundColor = Color.black
-                width = w
-                height = h
-                title = "a-${info.currentRepetition}"
-
+        val pixmap = MutateMap(Pixmap(w, h))
+        val times =  10000
+        val updateAt = times/100
+        repeat(times) {
+            if ((it % updateAt) == 0) println("Run: $it")
+            with(rand) {
+                do {
+                    tri.x1 = random(bx)
+                    tri.y1 = random(by)
+                    tri.x2 = random(bx)
+                    tri.y2 = random(by)
+                    tri.x3 = random(bx)
+                    tri.y3 = random(by)
+                } while (tri.invalid())
             }
+            tri.fill(pixmap)
+            pixmap.drop()
+            Thread.sleep(25)
         }
-        val gl: Pixmap = sdlTest(config) {
-            // Set the background
-//            Draw.color(Color.yellow)
-//            Fill.crect(0f, 0f, w.toFloat(), h.toFloat())
-//            Draw.flush()
-            // Fill triangle
-            Draw.color(Color.white)
-            Fill.tri(tri.x1.toFloat(), tri.y1.toFloat(), tri.x2.toFloat(), tri.y2.toFloat(), tri.x3.toFloat(), tri.y3.toFloat())
-            Draw.flush()
-//            Draw.proj(0f, 0f, w.toFloat(), h.toFloat())
-            return@sdlTest ScreenUtils.getFrameBufferPixmap(0, 0, w, h, true)
-        }
-        Thread.sleep(25)
-        if (gl.any { pixel, _, _ -> pixel != Color.blackRgba && pixel != Color.whiteRgba }) {
-            Log.info("trash created ${info.currentRepetition}/${info.totalRepetitions}")
-            Fi("gl.png").writePng(gl)
-            throw AssertionError()
-        }
+
     }
 
     @RepeatedTest(100)

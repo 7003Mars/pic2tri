@@ -27,7 +27,7 @@ fun main() {
     val tri = Triangle()
 
     // y 24
-    with(tri) {r=0; g=0; b=0; x1=35; y1=34; x2=7; y2=37; x3=2; y3=34}
+    with(tri) {r=0; g=0; b=0; x1=43; y1=225; x2=122; y2=146; x3=207; y3=61}
     val targetTri = NewTriangle().also { it.set(tri) }
     val pixmap = MutateMap(Pixmap(w, h))
     targetTri.fill(pixmap)
