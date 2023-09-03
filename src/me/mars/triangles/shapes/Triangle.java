@@ -105,10 +105,6 @@ public class Triangle extends Shape{
 				x1 = tmp;
 			}
 			Vec2 left = new Vec2(hx - x1, hy - y1), right = new Vec2(x2 - hx, y1 - hy);
-			// REMOVEME: remove asserts
-			assert left.y >= 0;
-			assert right.y <= 0;
-			Log.info("vecs are @, @", left, right);
 			fillBotFlat(pixmap, hx, hy, y1, left, right, x1, y1);
 		} else if (p[1].y == p[2].y) {
 			// point[0] is the lowest
@@ -119,16 +115,16 @@ public class Triangle extends Shape{
 				x1 = tmp;
 			}
 			Vec2 left = new Vec2(x1 - lx, y1 - ly), right = new Vec2(lx - x2, ly - y1);
-			// REMOVEME: remove asserts
-			assert left.y >= 0;
-			assert right.y <= 0;
-			Log.warn("vecs are @, @", left, right);
 			fillTopFlat(pixmap, lx, ly, y1, left, right, x2, y1);
 		} else {
 			// p[0] is the lowest, p[2] is the highest, p[1] and (x2,  y1) are in between
 			int lx = p[0].x, ly = p[0].y, hx = p[2].x, hy = p[2].y, x1 = p[1].x, y1 = p[1].y;
 			double x2 = (p[0].x + ((double)(p[1].y - p[0].y) / (double) (p[2].y - p[0].y)) * (p[2].x - p[0].x));
-			if (x2 == x1) throw new RuntimeException("Unsure what to do");
+			if (x2 == x1) {
+				// Points probably lie on a line, skip this unlucky run
+//				Log.warn("Whaa " + this);
+				return;
+			}
 			if (x2 > x1) {
 				// Right side is straight
 				Vec2 right = new Vec2(lx - hx, ly - hy);

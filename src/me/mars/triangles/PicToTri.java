@@ -2,21 +2,12 @@ package me.mars.triangles;
 
 import arc.Core;
 import arc.Events;
-import arc.files.Fi;
-import arc.graphics.Color;
-import arc.graphics.Pixmap;
-import arc.graphics.Pixmaps;
-import arc.graphics.g2d.Draw;
-import arc.graphics.g2d.Fill;
-import arc.graphics.gl.FrameBuffer;
 import arc.scene.ui.TextField;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.struct.StringMap;
 import arc.util.Log;
 import arc.util.OS;
-import arc.util.Tmp;
-import me.mars.triangles.shapes.Triangle;
 import me.mars.triangles.ui.ConverterDialog;
 import mindustry.Vars;
 import mindustry.content.Blocks;
@@ -72,48 +63,6 @@ public class PicToTri extends Mod {
 
 	@Override
 	public void init() {
-
-		// Testing gl
-		int w = 50, h = 50;
-		FrameBuffer buffer = new FrameBuffer(w, h);
-		Tmp.m1.set(Draw.proj());
-		Draw.proj(0, 0, w, h);
-		buffer.begin(Color.black);
-		Draw.color(Color.yellow);
-		Fill.tri(1, 1, 2, 1, 2, 2);
-		Draw.color(Color.green);
-		Fill.tri(2, 2, 2, 1, 1, 1);
-		Draw.flush();
-//		ScreenUtils.saveScreenshot(new Fi("buf-out.png"), 0, 0, w, h);
-		buffer.end();
-		Draw.proj(Tmp.m1);
-		MutateMap map = new MutateMap(new Pixmap(w, h));
-		map.fill(Color.black);
-		Triangle tri = new Triangle();
-
-		Log.info("filling red");
-		tri.x1 = 2;
-		tri.y1 = 2;
-		tri.x2 = 1;
-		tri.y2 = 2;
-		tri.x3 = 1;
-		tri.y3 = 1;
-		tri.fill(map);
-		map.apply(Color.red.rgba());
-		Log.info("Filling blue");
-		tri.x1 = 1;
-		tri.y1 = 1;
-		tri.x2 = 2;
-		tri.y2 = 1;
-		tri.x3 = 2;
-		tri.y3 = 2;
-		tri.fill(map);
-		map.apply(Color.blue.rgba());
-		Pixmaps.flip(map);
-		new Fi("pix-out.png").writePng(map);
-		Log.info("Files are at @", new Fi("here.png"));
-//		Core.app.exit();
-
 		Log.info("@ running version: @, with @ threads", internalName,  Vars.mods.getMod(internalName).meta.version, OS.cores);
 		if (!Core.settings.getBoolOnce(setting("first-run"))) addDefaultSchematics();
 		Vars.ui.settings.addCategory(bundle("mod-name"), t -> {
