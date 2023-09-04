@@ -82,8 +82,6 @@ public class Triangle extends Shape{
 
 	@Override
 	public boolean invalid() {
-		// TODO: Fix this entire function
-//		return false;
 		if ((this.x1 == this.x2 && this.x2 == this.x3) || (this.y1 == this.y2 && this.y2 == this.y3)) return true;
 		return (this.x1 == this.x2 && this.y1 == this.y2) || (this.x2 == this.x3 && this.y2 == this.y3) || (this.x3 == this.x1 && this.y3 == this.y1);
 	}
@@ -104,8 +102,10 @@ public class Triangle extends Shape{
 				x2 = x1;
 				x1 = tmp;
 			}
-			Vec2 left = new Vec2(hx - x1, hy - y1), right = new Vec2(x2 - hx, y1 - hy);
+			Vec2 left = pixmap.vecPool.obtain().set(hx - x1, hy - y1), right = pixmap.vecPool.obtain().set(x2 - hx, y1 - hy);
 			fillBotFlat(pixmap, hx, hy, y1, left, right, x1, y1);
+			pixmap.vecPool.free(left);
+			pixmap.vecPool.free(right);
 		} else if (p[1].y == p[2].y) {
 			// point[0] is the lowest
 			int x1 = p[1].x, x2 = p[2].x, lx = p[0].x, y1 = p[1].y, ly = p[0].y;
@@ -114,8 +114,10 @@ public class Triangle extends Shape{
 				x2 = x1;
 				x1 = tmp;
 			}
-			Vec2 left = new Vec2(x1 - lx, y1 - ly), right = new Vec2(lx - x2, ly - y1);
+			Vec2 left = pixmap.vecPool.obtain().set(x1 - lx, y1 - ly), right = pixmap.vecPool.obtain().set(lx - x2, ly - y1);
 			fillTopFlat(pixmap, lx, ly, y1, left, right, x2, y1);
+			pixmap.vecPool.free(left);
+			pixmap.vecPool.free(right);
 		} else {
 			// p[0] is the lowest, p[2] is the highest, p[1] and (x2,  y1) are in between
 			int lx = p[0].x, ly = p[0].y, hx = p[2].x, hy = p[2].y, x1 = p[1].x, y1 = p[1].y;
@@ -127,16 +129,22 @@ public class Triangle extends Shape{
 			}
 			if (x2 > x1) {
 				// Right side is straight
-				Vec2 right = new Vec2(lx - hx, ly - hy);
-				Vec2 botLeft = new Vec2(x1 - lx, y1 - ly), topLeft = new Vec2(hx - x1, hy - y1);
+				Vec2 right = pixmap.vecPool.obtain().set(lx - hx, ly - hy);
+				Vec2 botLeft = pixmap.vecPool.obtain().set(x1 - lx, y1 - ly), topLeft = pixmap.vecPool.obtain().set(hx - x1, hy - y1);
 				fillBotFlat(pixmap, hx, hy, y1, topLeft, right, x1, y1);
 				fillTopFlat(pixmap, lx, ly, y1, botLeft, right, hx, hy);
+				pixmap.vecPool.free(right);
+				pixmap.vecPool.free(botLeft);
+				pixmap.vecPool.free(topLeft);
 			} else {
 				// Left side is straight
-				Vec2 left = new Vec2(hx - lx, hy - ly);
-				Vec2 botRight = new Vec2(lx - x1, ly - y1), topRight = new Vec2(x1 - hx, y1 - hy);
+				Vec2 left = pixmap.vecPool.obtain().set(hx - lx, hy - ly);
+				Vec2 botRight = pixmap.vecPool.obtain().set(lx - x1, ly - y1), topRight = pixmap.vecPool.obtain().set(x1 - hx, y1 - hy);
 				fillBotFlat(pixmap, hx, hy, y1, left, topRight, lx, ly);
 				fillTopFlat(pixmap, lx, ly, y1, left, botRight, x1, y1);
+				pixmap.vecPool.free(left);
+				pixmap.vecPool.free(botRight);
+				pixmap.vecPool.free(topRight);
 			}
 		}
 		pixmap.pointPool.free(p1);

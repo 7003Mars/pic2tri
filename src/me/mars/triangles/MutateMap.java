@@ -4,6 +4,7 @@ import arc.graphics.Color;
 import arc.graphics.Pixmap;
 import arc.math.Mathf;
 import arc.math.geom.Point2;
+import arc.math.geom.Vec2;
 import arc.struct.Seq;
 import arc.struct.Sort;
 import arc.util.Log;
@@ -25,6 +26,12 @@ public class MutateMap extends Pixmap {
 		@Override
 		protected Point2 newObject() {
 			return new Point2();
+		}
+	};
+	public Pool<Vec2> vecPool = new Pool<>() {
+		@Override
+		protected Vec2 newObject() {
+			return new Vec2();
 		}
 	};
 
@@ -135,11 +142,10 @@ public class MutateMap extends Pixmap {
 			this.linePool.free(scanLine);
 			return;
 		}
-//		if (scanLine.x2 < scanLine.x1) return;
 		scanLine.x1 = Mathf.clamp(scanLine.x1, 0, this.width-1);
 		scanLine.x2 = Mathf.clamp(scanLine.x2, 0, this.width-1);
-		// REMOVEME: uncomment
-		if (marks.contains(l -> l.y == scanLine.y)) Log.warn("@ already there? For line @", scanLine.y, scanLine);
+		// Important: Set to true when running tests.
+		if ((false || PicToTri.debugMode) && marks.contains(l -> l.y == scanLine.y)) Log.warn("@ already there? For line @", scanLine.y, scanLine);
 		marks.add(scanLine);
 	}
 
