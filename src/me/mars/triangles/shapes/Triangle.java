@@ -201,12 +201,9 @@ public class Triangle extends Shape{
 	}
 
 	public static int accurateBounds(int x, int y, Vec2 vec, boolean ltr, int rx, int ry) {
-		Vec2 pv = new Vec2();
 		int sign = ltr ? 1 : -1;
 		for (int i = 0; i < 4; i++) {
-			pv.set(x+0.5f-rx, y+0.5f-ry);
-//			float area = vec.crs(x+0.5f-rx, y+0.5f-ry);
-			float area = pv.crs(vec);
+			float area = -vec.crs(x+0.5f-rx, y+0.5f-ry);
 			if (area == 0 ? (vec.y > 0 || (vec.y == 0 && vec.x > 0)) : area > 0) {
 				return x;
 			}
