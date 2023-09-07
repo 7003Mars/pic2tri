@@ -1,5 +1,6 @@
 package me.mars.triangles;
 
+import arc.func.Prov;
 import arc.graphics.Color;
 import arc.graphics.Pixmap;
 import arc.math.Mathf;
@@ -16,24 +17,11 @@ public class MutateMap extends Pixmap {
 	private Seq<ScanLine> marks = new Seq<>();
 	public Sort sort = new Sort();
 
-	private Pool<ScanLine> linePool = new Pool<>() {
-		@Override
-		protected ScanLine newObject() {
-			return new ScanLine();
-		}
-	};
-	public Pool<Point2> pointPool = new Pool<>() {
-		@Override
-		protected Point2 newObject() {
-			return new Point2();
-		}
-	};
-	public Pool<Vec2> vecPool = new Pool<>() {
-		@Override
-		protected Vec2 newObject() {
-			return new Vec2();
-		}
-	};
+	private Pool<ScanLine> linePool = getPoolFor(ScanLine::new);
+	public Pool<Point2> pointPool = getPoolFor(Point2::new);
+	public Pool<Vec2> vecPool = getPoolFor(Vec2::new);
+
+	public static boolean testing = false;
 
 
 	public MutateMap(Pixmap origin) {
@@ -144,8 +132,7 @@ public class MutateMap extends Pixmap {
 		}
 		scanLine.x1 = Mathf.clamp(scanLine.x1, 0, this.width-1);
 		scanLine.x2 = Mathf.clamp(scanLine.x2, 0, this.width-1);
-		// Important: Set to true when running tests.
-		if ((false || PicToTri.debugMode) && marks.contains(l -> l.y == scanLine.y)) Log.warn("@ already there? For line @", scanLine.y, scanLine);
+		if ((testing || PicToTri.debugMode) && marks.contains(l -> l.y == scanLine.y)) Log.warn("@ already there? For line @", scanLine.y, scanLine);
 		marks.add(scanLine);
 	}
 
@@ -154,5 +141,14 @@ public class MutateMap extends Pixmap {
 		super.dispose();
 		this.pointPool.clear();
 		this.linePool.clear();
+	}
+
+	public static <T> Pool<T> getPoolFor(Prov<T> cons) {
+		return new Pool<>() {
+			@Override
+			protected T newObject() {
+				return cons.get();
+			}
+		};
 	}
 }

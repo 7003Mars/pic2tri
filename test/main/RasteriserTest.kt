@@ -125,6 +125,7 @@ class RasteriserTest {
         @BeforeAll
         fun clearOutput(): Unit {
             Fi("out").deleteDirectory()
+            MutateMap.testing = true
         }
     }
 }

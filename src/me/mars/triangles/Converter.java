@@ -3,10 +3,12 @@ package me.mars.triangles;
 import arc.Core;
 import arc.graphics.Pixmap;
 import arc.math.Mathf;
+import arc.math.geom.Point2;
 import arc.struct.*;
 import arc.util.Log;
 import arc.util.OS;
 import arc.util.Threads;
+import me.mars.triangles.schematics.SchematicHandler;
 import me.mars.triangles.shapes.Shape;
 import mindustry.Vars;
 import mindustry.game.Schematic;
@@ -20,7 +22,7 @@ public class Converter {
 	private static final ExecutorService executor = Threads.executor("Image converter", OS.cores);
 
 	public LogicBlock block;
-	public LogicDisplay display;
+	public LogicDisplay displayType;
 	public String name;
 	public final int seed;
 	public int xChunks, yChunks;
@@ -39,7 +41,7 @@ public class Converter {
 		this.name = name.isEmpty() ? "!!name me" : name;
 
 		this.block = block;
-		this.display = display;
+		this.displayType = display;
 		this.filler = filler;
 		// Scale pixmap down
 		Pixmap resized = new Pixmap(width, height);
@@ -59,7 +61,7 @@ public class Converter {
 		}
 		for (int y = 0; y < this.yChunks; y++) {
 			for (int x = 0; x < this.xChunks; x++) {
-				Pixmap cropped = new Pixmap(this.display.displaySize, this.display.displaySize);
+				Pixmap cropped = new Pixmap(this.displayType.displaySize, this.displayType.displaySize);
 				int xOffset = this.displayRes() * x;
 				int yOffset = this.displayRes() * y;
 				cropped.draw(this.source, xOffset, yOffset, displayRes(), displayRes(), 0, 0, displayRes(), displayRes(), true);
@@ -105,10 +107,16 @@ public class Converter {
 		SchemBuilder builder = this.filler.rebuild();
 		// Build schematic
 		Seq<Stile> outTiles = new Seq<>();
+		Seq<Point2> displayPositions = new Seq<>();
 		for (int i = 0; i < shapesSeq.size; i++) {
 			Seq<Shape> shapes = shapesSeq.get(i);
-			builder.displays.get(i).build(shapes, outTiles, this.display);
+			SchemBuilder.Display display = builder.displays.get(i);
+			display.build(shapes, outTiles, this.displayType);
+			displayPositions.add(new Point2(display.x, display.y));
 		}
+		SchemBuilder.Display first = builder.displays.first();
+		displayPositions.each(p -> p.sub(first.x-1, first.y-1));
+		outTiles.add(SchematicHandler.anchorBlock.generateStile(first.x-1, first.y-1,this.displayType, displayPositions));
 		StringMap tags = new StringMap();
 		tags.put("name", this.name);
 		Schematic schem = new Schematic(outTiles, tags, builder.width, builder.height);
@@ -127,6 +135,6 @@ public class Converter {
 
 
 	int displayRes() {
-		return this.display.displaySize;
+		return this.displayType.displaySize;
 	}
 }
