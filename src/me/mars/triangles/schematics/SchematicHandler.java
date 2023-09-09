@@ -42,8 +42,8 @@ public class SchematicHandler {
 		Events.on(EventType.ContentInitEvent.class, contentInitEvent -> {
 			anchorBlock = new ImageAnchorBlock();
 			microLink = new LinkAssistBlock((LogicBlock) Blocks.microProcessor);
-//			link = new LinkAssistBlock((LogicBlock) Blocks.logicProcessor);
-//			hyperLink = new LinkAssistBlock((LogicBlock) Blocks.hyperProcessor);
+			link = new LinkAssistBlock((LogicBlock) Blocks.logicProcessor);
+			hyperLink = new LinkAssistBlock((LogicBlock) Blocks.hyperProcessor);
 
 			// Gotta reload them due to the new blocks
 			Vars.schematics.load();

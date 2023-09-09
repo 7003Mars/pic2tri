@@ -37,15 +37,16 @@ public class ImageAnchorBlock extends Block {
 		if (config instanceof Object[] objArray &&
 				objArray.length == 2 && objArray[0] instanceof Content content &&
 				objArray[1] instanceof Point2[] rawPoints) {
-			Seq<Point2> points = new Seq<>(rawPoints).map(p -> new Point2().set(p).add(plan.x, plan.y));
+			Seq<Point2> points = new Seq<>(rawPoints).map(p -> p.cpy().add(plan.x, plan.y));
 			LogicDisplay display = (LogicDisplay) content;
+			// TODO Add support for links and hyperLinks(Based on schematic size)
+			LinkAssistBlock linkBlock = SchematicHandler.microLink;
+			Stile button = new Stile(Blocks.switchBlock, 0, 0, null, (byte) 0);
+			int offset = -linkBlock.sizeOffset;
+			LinkAssistBlock.LinkData data = new LinkAssistBlock.LinkData(display, new Point2(-offset-1, -offset), points.toArray(Point2.class));
+			Stile linker = new Stile(linkBlock, offset+1, offset, data, (byte) 0);
+			Schematic schem = new Schematic(Seq.with(button, linker), new StringMap(), 1+linkBlock.size, linkBlock.size);
 			Core.app.post(() -> {
-				// TODO Add support for links and hyperLinks(Based on schematic size). Also deal with rotation offset hell
-				LinkAssistBlock linkBlock = SchematicHandler.microLink;
-				Stile button = new Stile(Blocks.switchBlock, 0, 0, null, (byte) 0);
-				int offset = -linkBlock.sizeOffset;
-				Stile linker = new Stile(linkBlock, offset+1, offset, new LinkAssistBlock.LinkData(display, points.toArray(Point2.class)), (byte) 0);
-				Schematic schem = new Schematic(Seq.with(button, linker), new StringMap(), 1+linkBlock.size, linkBlock.size);
 				Vars.control.input.useSchematic(schem);
 			});
 
@@ -56,7 +57,9 @@ public class ImageAnchorBlock extends Block {
 	}
 
 	@Override
-	public void drawPlan(BuildPlan plan, Eachable<BuildPlan> list, boolean valid) {}
+	public void drawPlan(BuildPlan plan, Eachable<BuildPlan> list, boolean valid) {
+		// TODO: Show a warning if the schematic was rotated
+	}
 
 	@Override
 	public void drawPlanRegion(BuildPlan plan, Eachable<BuildPlan> list) {}
