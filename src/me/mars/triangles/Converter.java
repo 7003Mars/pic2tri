@@ -115,8 +115,10 @@ public class Converter {
 			displayPositions.add(new Point2(display.x, display.y));
 		}
 		SchemBuilder.Display first = builder.displays.first();
-		displayPositions.each(p -> p.sub(first.x-1, first.y-1));
-		outTiles.add(SchematicHandler.anchorBlock.generateStile(first.x-1, first.y-1,this.displayType, displayPositions));
+		displayPositions.each(p -> p.sub(first.x, first.y));
+		int offset = this.displayType.sizeOffset;
+		// TODO: Setting to generate AnchorBlocks
+		outTiles.add(SchematicHandler.anchorBlock.generateStile(first.x+offset, first.y+offset,this.displayType, displayPositions));
 		StringMap tags = new StringMap();
 		tags.put("name", this.name);
 		Schematic schem = new Schematic(outTiles, tags, builder.width, builder.height);

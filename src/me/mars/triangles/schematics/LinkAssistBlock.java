@@ -1,14 +1,21 @@
 package me.mars.triangles.schematics;
 
+import arc.Core;
 import arc.func.Cons;
 import arc.graphics.Color;
 import arc.math.Mathf;
 import arc.math.geom.Point2;
+import arc.struct.DelayedRemovalSeq;
+import arc.struct.Seq;
+import arc.struct.StringMap;
 import arc.util.Eachable;
 import arc.util.Time;
 import arc.util.Tmp;
 import me.mars.triangles.PicToTri;
+import mindustry.Vars;
+import mindustry.content.Blocks;
 import mindustry.entities.units.BuildPlan;
+import mindustry.game.Schematic;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Pal;
 import mindustry.world.Block;
@@ -33,12 +40,11 @@ public class LinkAssistBlock extends Block {
 
 	@Override
 	public void drawPlanConfig(BuildPlan plan, Eachable<BuildPlan> list) {
-		// TODO: Figure out why displayRange is more than actual range
-		// Remove the -4 once you figure out why
-		int displayRange = ((LinkData)plan.config).display.size*tilesize/2-4;
+		LinkData data = (LinkData)plan.config;
+		int halfDisplay = data.display.size*tilesize/2;
 		for (Point2 p : ((LinkData)plan.config).points) {
-			float worldX = p.x * tilesize, worldY = p.y * tilesize;
-			boolean valid = Mathf.within(worldX, worldY, plan.x * tilesize, plan.y * tilesize, this.proc.range+displayRange);
+			float worldX = p.x * tilesize + halfDisplay-4, worldY = p.y * tilesize + halfDisplay-4;
+			boolean valid = Mathf.within(worldX, worldY, plan.x * tilesize+this.offset, plan.y * tilesize+this.offset, this.proc.range+halfDisplay);
 			Drawf.square(worldX, worldY, tilesize, Time.time*9/Mathf.pi-Mathf.absin(10f, 90f), valid ? Color.green : Pal.noplace);
 		}
 		Drawf.dashCircle(plan.x*tilesize, plan.y*tilesize, this.proc.range, Pal.range);
@@ -51,12 +57,26 @@ public class LinkAssistBlock extends Block {
 		logicBuild.tile = new Tile(0, 0);
 		logicBuild.code = SchematicHandler.reloadScript;
 		LinkData data = (LinkData)plan.config;
+		DelayedRemovalSeq<Point2> points = new DelayedRemovalSeq<>(data.points);
 		int i = 1;
-		for (Point2 p : data.points) {
+		int halfDisplay = data.display.size*tilesize/2;
+		points.begin();
+		for (Point2 p : points) {
+			float worldX = p.x * tilesize + halfDisplay - 4, worldY = p.y * tilesize + halfDisplay - 4;
+			boolean valid = Mathf.within(worldX, worldY, plan.x * tilesize+this.offset, plan.y * tilesize+this.offset, this.proc.range+halfDisplay);
+			if (valid) points.remove(p);
 			logicBuild.links.add(new LogicBlock.LogicLink(p.x-plan.x, p.y-plan.y, "display"+(i++), true));
 		}
+		points.end();
 		logicBuild.links.add(new LogicBlock.LogicLink(data.buttonPos.x, data.buttonPos.y, "switch1", true));
 		plan.config = logicBuild.config();
+		if (points.any()) {
+//			Log.info("Points @", points);
+			Core.app.post(() -> Vars.control.input.useSchematic(this.generateSchematic(points, data.display)));
+		} else {
+			Schematic airSchem = new Schematic(new Seq<>(), new StringMap(), 0, 0);
+			Vars.control.input.useSchematic(airSchem);
+		}
 	}
 
 	@Override
@@ -78,6 +98,16 @@ public class LinkAssistBlock extends Block {
 		return config;
 	}
 
+	@Override
+	public boolean isHidden() {
+		return true;
+	}
+
+	@Override
+	public boolean isVisible() {
+		return true;
+	}
+
 	public static class LinkData {
 		Point2 buttonPos;
 		LogicDisplay display;
@@ -87,5 +117,13 @@ public class LinkAssistBlock extends Block {
 			this.display = display;
 			this.points = points;
 		}
+	}
+
+	public Schematic generateSchematic(Seq<Point2> points,LogicDisplay display) {
+		Schematic.Stile button = new Schematic.Stile(Blocks.switchBlock, 0, 0, null, (byte) 0);
+		int offset = -this.sizeOffset;
+		LinkAssistBlock.LinkData data = new LinkAssistBlock.LinkData(display, new Point2(-offset-1, -offset), points.toArray(Point2.class));
+		Schematic.Stile linker = new Schematic.Stile(this, offset+1, offset, data, (byte) 0);
+		return new Schematic(Seq.with(button, linker), new StringMap(), 1+this.size, this.size);
 	}
 }

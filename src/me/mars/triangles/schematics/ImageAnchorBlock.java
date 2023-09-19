@@ -1,9 +1,9 @@
 package me.mars.triangles.schematics;
 
 import arc.Core;
+import arc.graphics.Color;
 import arc.math.geom.Point2;
 import arc.struct.Seq;
-import arc.struct.StringMap;
 import arc.util.Eachable;
 import arc.util.Log;
 import arc.util.Structs;
@@ -12,11 +12,12 @@ import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.ctype.Content;
 import mindustry.entities.units.BuildPlan;
-import mindustry.game.Schematic;
 import mindustry.game.Schematic.Stile;
+import mindustry.graphics.Drawf;
 import mindustry.world.Block;
 import mindustry.world.blocks.logic.LogicDisplay;
 import mindustry.world.meta.BuildVisibility;
+import mindustry.world.modules.ItemModule;
 
 public class ImageAnchorBlock extends Block {
 
@@ -34,21 +35,16 @@ public class ImageAnchorBlock extends Block {
 		// Schematic was rotated, ignore it
 		if (plan.rotation != 0) return;
 		Object config = plan.config;
+		// TODO: Add a version check
 		if (config instanceof Object[] objArray &&
 				objArray.length == 2 && objArray[0] instanceof Content content &&
 				objArray[1] instanceof Point2[] rawPoints) {
 			Seq<Point2> points = new Seq<>(rawPoints).map(p -> p.cpy().add(plan.x, plan.y));
 			LogicDisplay display = (LogicDisplay) content;
 			// TODO Add support for links and hyperLinks(Based on schematic size)
-			LinkAssistBlock linkBlock = SchematicHandler.microLink;
-			Stile button = new Stile(Blocks.switchBlock, 0, 0, null, (byte) 0);
-			int offset = -linkBlock.sizeOffset;
-			LinkAssistBlock.LinkData data = new LinkAssistBlock.LinkData(display, new Point2(-offset-1, -offset), points.toArray(Point2.class));
-			Stile linker = new Stile(linkBlock, offset+1, offset, data, (byte) 0);
-			Schematic schem = new Schematic(Seq.with(button, linker), new StringMap(), 1+linkBlock.size, linkBlock.size);
-			Core.app.post(() -> {
-				Vars.control.input.useSchematic(schem);
-			});
+			LinkAssistBlock linkBlock = getSuitableBlock(points, display);
+			// TODO: Add setting to do nothing
+			Core.app.post(() -> Vars.control.input.useSchematic(linkBlock.generateSchematic(points, display)));
 
 		} else {
 			Log.err("Invalid anchor data. Should be array{Content, Point2[]}, is @", config);
@@ -59,12 +55,48 @@ public class ImageAnchorBlock extends Block {
 	@Override
 	public void drawPlan(BuildPlan plan, Eachable<BuildPlan> list, boolean valid) {
 		// TODO: Show a warning if the schematic was rotated
+		if (!PicToTri.debugMode) return;
+		Drawf.select(plan.x*8, plan.y*8, 4, Color.black);
+		Object config = plan.config;
+		if (config instanceof Object[] objects && objects[1] instanceof Point2[] points) {
+			for (Point2 p : points) {
+				Drawf.square(p.x*8+plan.x*8, p.y*8+plan.y*8, 4, Color.white);
+			}
+		}
 	}
 
 	@Override
 	public void drawPlanRegion(BuildPlan plan, Eachable<BuildPlan> list) {}
 
+	@Override
+	public boolean isHidden() {
+		return true;
+	}
+
+	@Override
+	public boolean isVisible() {
+		return true;
+	}
+
 	public Stile generateStile(int x, int y, LogicDisplay displayType, Seq<Point2> points) {
 		return new Stile(this, x, y, Structs.arr(displayType, points.toArray(Point2.class)), (byte) 0);
+	}
+
+	static LinkAssistBlock getSuitableBlock(Seq<Point2> points, LogicDisplay display) {
+		Seq<LinkAssistBlock> blockPriority = Seq.with(SchematicHandler.hyperLink, SchematicHandler.link, SchematicHandler.microLink);
+		int width = points.max(p -> p.x).x - points.min(p -> p.x).x, height = points.max(p -> p.y).y - points.min(p -> p.y).y;
+		int size = Math.max(width, height)*8 + display.size*4;
+		boolean sandbox = Vars.state.rules.infiniteResources;
+		ItemModule items = Vars.player.team().items();
+		for (int i = 0; i < blockPriority.size; i++) {
+			LinkAssistBlock block = blockPriority.get(i);
+			if (!(sandbox || items.has(block.proc.requirements))) continue;
+			if ((i+1) < blockPriority.size) {
+				LinkAssistBlock next = blockPriority.get(i+1);
+				if (next.proc.range*2 > size) continue;
+			}
+			return block;
+		}
+		return SchematicHandler.microLink;
 	}
 }
