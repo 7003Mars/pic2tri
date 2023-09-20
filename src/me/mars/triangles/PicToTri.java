@@ -35,6 +35,8 @@ public class PicToTri extends Mod {
 		Core.settings.defaults(setting("debug-mode"), false);
 		Core.settings.defaults(setting("default-seed"), "");
 		Core.settings.defaults(setting("java-loader"), true);
+		Core.settings.defaults(setting("add-metadata"), true);
+		Core.settings.defaults(setting("link-assist"), true);
 
 		SchematicHandler.create();
 	}
@@ -51,6 +53,8 @@ public class PicToTri extends Mod {
 			t.pref(new SeedSetting(setting("default-seed")));
 			t.checkPref(setting("java-loader"), false);
 			t.getSettings().add(new HiddenSetting(setting("first-run")));
+			t.checkPref(setting("add-metadata"), true);
+			t.checkPref(setting("link-assist"), true);
 		});
 
 		BaseDialog converterDialog = new ConverterDialog();

@@ -19,6 +19,8 @@ import mindustry.world.blocks.logic.LogicDisplay;
 import mindustry.world.meta.BuildVisibility;
 import mindustry.world.modules.ItemModule;
 
+import static me.mars.triangles.PicToTri.setting;
+
 public class ImageAnchorBlock extends Block {
 
 	public ImageAnchorBlock() {
@@ -35,19 +37,20 @@ public class ImageAnchorBlock extends Block {
 		// Schematic was rotated, ignore it
 		if (plan.rotation != 0) return;
 		Object config = plan.config;
-		// TODO: Add a version check
-		if (config instanceof Object[] objArray &&
-				objArray.length == 2 && objArray[0] instanceof Content content &&
-				objArray[1] instanceof Point2[] rawPoints) {
+		if (config instanceof Object[] objArray && objArray.length == 3 &&
+				objArray[0] instanceof Integer ver && ver == 1 &&
+				objArray[1] instanceof Content content &&
+				objArray[2] instanceof Point2[] rawPoints) {
 			Seq<Point2> points = new Seq<>(rawPoints).map(p -> p.cpy().add(plan.x, plan.y));
 			LogicDisplay display = (LogicDisplay) content;
-			// TODO Add support for links and hyperLinks(Based on schematic size)
 			LinkAssistBlock linkBlock = getSuitableBlock(points, display);
-			// TODO: Add setting to do nothing
-			Core.app.post(() -> Vars.control.input.useSchematic(linkBlock.generateSchematic(points, display)));
+			if (Core.settings.getBool(setting("link-assist"))) {
+				Core.app.post(() -> Vars.control.input.useSchematic(linkBlock.generateSchematic(points, display)));
+			}
 
 		} else {
-			Log.err("Invalid anchor data. Should be array{Content, Point2[]}, is @", config);
+			Log.err("Invalid anchor data. Should be array{Int, Content, Point2[]}, is @",
+					config instanceof Object[] arr ? new Seq<>(arr) : config);
 		}
 		plan.block = Blocks.air;
 	}
@@ -58,7 +61,7 @@ public class ImageAnchorBlock extends Block {
 		if (!PicToTri.debugMode) return;
 		Drawf.select(plan.x*8, plan.y*8, 4, Color.black);
 		Object config = plan.config;
-		if (config instanceof Object[] objects && objects[1] instanceof Point2[] points) {
+		if (config instanceof Object[] objects && objects[2] instanceof Point2[] points) {
 			for (Point2 p : points) {
 				Drawf.square(p.x*8+plan.x*8, p.y*8+plan.y*8, 4, Color.white);
 			}
@@ -79,7 +82,7 @@ public class ImageAnchorBlock extends Block {
 	}
 
 	public Stile generateStile(int x, int y, LogicDisplay displayType, Seq<Point2> points) {
-		return new Stile(this, x, y, Structs.arr(displayType, points.toArray(Point2.class)), (byte) 0);
+		return new Stile(this, x, y, Structs.arr(1, displayType, points.toArray(Point2.class)), (byte) 0);
 	}
 
 	static LinkAssistBlock getSuitableBlock(Seq<Point2> points, LogicDisplay display) {
