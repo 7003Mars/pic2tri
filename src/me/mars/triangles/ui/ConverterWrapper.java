@@ -1,10 +1,7 @@
 package me.mars.triangles.ui;
 
-import arc.graphics.Color;
-import arc.scene.Element;
 import arc.scene.ui.Button;
 import arc.scene.ui.CheckBox;
-import arc.scene.ui.ProgressBar;
 import arc.scene.ui.TextField;
 import arc.scene.ui.layout.Table;
 import arc.util.Strings;
@@ -56,7 +53,7 @@ public class ConverterWrapper extends Table {
 		this.row();
 		this.collapser(t -> {
 			t.setBackground(Styles.grayPanel);
-			t.row();
+			t.row().defaults().left();
 			for (Generator gen : conv.generators) {
 				t.image(() -> {
 					switch (gen.getState()) {
@@ -73,10 +70,11 @@ public class ConverterWrapper extends Table {
 					return null;
 				});
 				// TODO: Show time only if running
-				t.label(() -> formatTime(gen.timeToCompletion()) + " " + Strings.fixed(gen.acc()*100f, 3) + "%");
+				t.label(() -> gen.getState() == Generator.GenState.Start ? formatTime(gen.timeToCompletion()) : "").growX();
+				t.label(() -> Strings.fixed(gen.acc()*100f, 3) + "%");
 				t.row();
 			}
-		}, true, () -> this.collapsed.isChecked());
+		}, true, () -> this.collapsed.isChecked()).colspan(4).growX();
 	}
 
 	static String formatTime(float time) {

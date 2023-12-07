@@ -34,7 +34,7 @@ repositories {
     maven("https://www.jitpack.io")
     maven("https://maven.xpdustry.com/anuken")
 }
-val mindustryVersion by extra("v145.1")
+val mindustryVersion by extra("v146")
 val jabelVersion by extra("93fde537c7")
 val sdkRoot: String? by extra(System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT"))
 
@@ -49,7 +49,7 @@ allprojects {
 configurations.all{
     resolutionStrategy.eachDependency {
         if(this.requested.group == "com.github.Anuken.Arc"){
-            this.useVersion("v145.1")
+            this.useVersion("v146")
         }
     }
 }
