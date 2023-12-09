@@ -35,7 +35,10 @@ public class ImageAnchorBlock extends Block {
 	@Override
 	public void onNewPlan(BuildPlan plan) {
 		// Schematic was rotated, ignore it
-		if (plan.rotation != 0) return;
+		if (plan.rotation != 0) {
+			plan.block = Blocks.air;
+			return;
+		}
 		Object config = plan.config;
 		if (config instanceof Object[] objArray && objArray.length == 3 &&
 				objArray[0] instanceof Integer ver && ver == 1 &&
