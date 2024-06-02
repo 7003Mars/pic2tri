@@ -32,6 +32,7 @@ sourceSets {
 repositories {
     mavenCentral()
     maven("https://www.jitpack.io")
+    maven("https://github.com/Zelaux/MindustryRepo")
     maven("https://maven.xpdustry.com/anuken")
 }
 val mindustryVersion by extra("v146")

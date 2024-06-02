@@ -18,11 +18,11 @@ import mindustry.entities.units.BuildPlan;
 import mindustry.game.Schematic;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Pal;
+import mindustry.type.ItemStack;
 import mindustry.world.Block;
 import mindustry.world.Tile;
 import mindustry.world.blocks.logic.LogicBlock;
 import mindustry.world.blocks.logic.LogicDisplay;
-import mindustry.world.meta.BuildVisibility;
 
 import static mindustry.Vars.tilesize;
 
@@ -33,14 +33,20 @@ public class LinkAssistBlock extends Block {
 		this.size = proc.size;
 		this.proc = proc;
 		this.rotate = true;
-		this.buildVisibility = BuildVisibility.shown;
-		this.category = null;
+		this.requirements(null, ItemStack.empty);
+//		this.buildVisibility = BuildVisibility.shown;
+//		this.requirements()
+//		this.category = null;
 		this.init();
 	}
 
 	@Override
 	public void drawPlanConfig(BuildPlan plan, Eachable<BuildPlan> list) {
 		LinkData data = (LinkData)plan.config;
+		if (data == null) {
+			plan.block = Blocks.air;
+			return;
+		}
 		int halfDisplay = data.display.size*tilesize/2;
 		for (Point2 p : ((LinkData)plan.config).points) {
 			float worldX = p.x * tilesize + halfDisplay-4, worldY = p.y * tilesize + halfDisplay-4;
