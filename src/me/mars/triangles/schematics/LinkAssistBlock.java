@@ -30,13 +30,12 @@ public class LinkAssistBlock extends Block {
 	LogicBlock proc;
 	public LinkAssistBlock(LogicBlock proc) {
 		super(PicToTri.internalName+"-linker-"+proc.name);
+		this.localizedName = "\u2206";
+		this.description = "Not a real block. Used internally by mod";
 		this.size = proc.size;
 		this.proc = proc;
 		this.rotate = true;
 		this.requirements(null, ItemStack.empty);
-//		this.buildVisibility = BuildVisibility.shown;
-//		this.requirements()
-//		this.category = null;
 		this.init();
 	}
 
