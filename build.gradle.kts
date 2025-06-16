@@ -35,7 +35,7 @@ repositories {
     maven("https://github.com/Zelaux/MindustryRepo")
     maven("https://maven.xpdustry.com/anuken")
 }
-val mindustryVersion by extra("v146")
+val mindustryVersion by extra("v149")
 val jabelVersion by extra("93fde537c7")
 val sdkRoot: String? by extra(System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT"))
 

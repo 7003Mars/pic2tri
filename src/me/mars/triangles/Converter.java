@@ -61,7 +61,7 @@ public class Converter {
 		}
 		for (int y = 0; y < this.yChunks; y++) {
 			for (int x = 0; x < this.xChunks; x++) {
-				Pixmap cropped = new Pixmap(this.displayType.displaySize, this.displayType.displaySize);
+				Pixmap cropped = new Pixmap(this.displayRes(), this.displayRes());
 				int xOffset = this.displayRes() * x;
 				int yOffset = this.displayRes() * y;
 				cropped.draw(this.source, xOffset, yOffset, displayRes(), displayRes(), 0, 0, displayRes(), displayRes(), true);
