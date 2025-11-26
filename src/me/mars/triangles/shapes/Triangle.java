@@ -12,8 +12,6 @@ import me.mars.triangles.MutateMap;
 
 
 public class Triangle extends Shape{
-	private static final int maxOut = 16;
-	private static final int max = 20;
 
 	public int x1, y1, x2, y2, x3, y3;
 
@@ -38,11 +36,11 @@ public class Triangle extends Shape{
 		int h = context.original.height - 1;
 		do {
 			this.x1 = rand.random(w);
-			this.x2 = Mathf.clamp(this.x1 + rand.random(-max, max), 0, w);
-			this.x3 = Mathf.clamp(this.x1 + rand.random(-max, max), 0, h);
+			this.x2 = Mathf.clamp(this.x1 + rand.random(-context.maxRange, context.maxRange), 0, w);
+			this.x3 = Mathf.clamp(this.x1 + rand.random(-context.maxRange, context.maxRange), 0, h);
 			this.y1 = rand.random(h);
-			this.y2 = Mathf.clamp(this.y1 + rand.random(-max, max), 0, w);
-			this.y3 = Mathf.clamp(this.y1 + rand.random(-max, max), 0, h);
+			this.y2 = Mathf.clamp(this.y1 + rand.random(-context.maxRange, context.maxRange), 0, w);
+			this.y3 = Mathf.clamp(this.y1 + rand.random(-context.maxRange, context.maxRange), 0, h);
 		} while (invalid());
 
 	}
@@ -56,23 +54,23 @@ public class Triangle extends Shape{
 		boolean p3In = this.x3 >= 0 && this.x3 < w && this.y3 >= 0 && this.y3 < h;
 		int bounds;
 		do {
-			float rx = rand.nextFloat()*max - max/2f;
+			float rx = rand.nextFloat()*context.maxRange - context.maxRange/2f;
 			int cx = (rx > 0) ? Mathf.ceilPositive(rx) : Mathf.floor(rx);
-			float ry = rand.nextFloat()*max - max/2f;
+			float ry = rand.nextFloat()*context.maxRange - context.maxRange/2f;
 			int cy = (ry > 0) ? Mathf.ceilPositive(ry) : Mathf.floor(ry);
 			switch (rand.random(2)) {
 				case 0 -> {
-					bounds = p2In || p3In ? maxOut : 0;
+					bounds = p2In || p3In ? context.maxOut : 0;
 					this.x1 = Mathf.clamp(this.x1+cx, -bounds, w-1+bounds);
 					this.y1 = Mathf.clamp(this.y1+cy, -bounds, h-1+bounds);
 				}
 				case 1 -> {
-					bounds = p1In || p3In ? maxOut : 0;
+					bounds = p1In || p3In ? context.maxOut : 0;
 					this.x2 = Mathf.clamp(this.x2+cx, -bounds, w-1+bounds);
 					this.y2 = Mathf.clamp(this.y2+cy, -bounds, h-1+bounds);
 				}
 				case 2 -> {
-					bounds = p1In || p2In ? maxOut: 0;
+					bounds = p1In || p2In ? context.maxOut: 0;
 					this.x3 = Mathf.clamp(this.x3+cx, -bounds, w-1+bounds);
 					this.y3 = Mathf.clamp(this.y3+cy, -bounds, h-1+bounds);
 				}
@@ -80,7 +78,17 @@ public class Triangle extends Shape{
 		} while (invalid());
 	}
 
-	@Override
+    @Override
+    public void translate(int x, int y) {
+        this.x1 += x;
+        this.x2 += x;
+        this.x3 += x;
+        this.y1 += y;
+        this.y2 += y;
+        this.y3 += y;
+    }
+
+    @Override
 	public boolean invalid() {
 		if ((this.x1 == this.x2 && this.x2 == this.x3) || (this.y1 == this.y2 && this.y2 == this.y3)) return true;
 		return (this.x1 == this.x2 && this.y1 == this.y2) || (this.x2 == this.x3 && this.y2 == this.y3) || (this.x3 == this.x1 && this.y3 == this.y1);

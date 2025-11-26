@@ -6,6 +6,7 @@ import me.mars.triangles.MutateMap;
 import me.mars.triangles.Generator;
 
 public class FillShape extends Shape{
+    public int x, y, w, h;
 	public FillShape(int r, int g, int b) {
 		this.r = (short) r;
 		this.g = (short) g;
@@ -19,10 +20,17 @@ public class FillShape extends Shape{
 
 	@Override
 	public void mutate(Generator context, Rand rand) {
-		throw new UnsupportedOperationException();
+        this.w = context.original.width;
+        this.h = context.original.height;
 	}
 
-	@Override
+    @Override
+    public void translate(int x, int y) {
+        this.x += x;
+        this.y += y;
+    }
+
+    @Override
 	public boolean invalid() {
 		throw new UnsupportedOperationException();
 	}
@@ -35,6 +43,7 @@ public class FillShape extends Shape{
 	@Override
 	public String toInstr() {
 		// Instruction padding
-		return Strings.format("print \"Made with PicToTri\"\ndraw clear @ @ @ 0 0 0\n", this.r, this.g, this.b);
+        return Strings.format("draw color @ @ @ @ 0 0\ndraw rect @ @ @ @ 0 0\n",
+                this.r, this.g, this.b, this.a, this.x, this.y, this.w, this.h);
 	}
 }

@@ -1,6 +1,6 @@
 package me.mars.triangles;
 
-import arc.files.Fi;
+import arc.func.Prov;
 import arc.graphics.Color;
 import arc.graphics.Pixmap;
 import arc.math.Mathf;
@@ -8,16 +8,14 @@ import arc.math.Rand;
 import arc.math.WindowedMean;
 import arc.struct.Seq;
 import arc.util.Log;
-import arc.util.Nullable;
 import arc.util.Time;
 import me.mars.triangles.shapes.FillShape;
 import me.mars.triangles.shapes.Shape;
 import me.mars.triangles.shapes.Triangle;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Generator implements Callable<Seq<Shape>> {
+public class Generator {
 	private static final int Max_Age = 250, Shape_Tries = 250;
 
 	public final int alpha;
@@ -29,62 +27,85 @@ public class Generator implements Callable<Seq<Shape>> {
 	private volatile long curRaw = Long.MAX_VALUE;
 	public final float targetAcc;
 
-	private Triangle prevState;
+    private Triangle prevState = new Triangle();
 	private final Rand rand;
+    public final int maxRange;
+    public final int maxOut;
 
-	private @Nullable Fi loadPath;
+    private Prov<Pixmap> pixmapProv;
 	public Pixmap original;
+    private Prov<Pixmap> continueProv;
+    private boolean retainPixmap;
 	private MutateMap mutated;
 
 	private Seq<Shape> history = new Seq<>();
 
-	public Generator(Pixmap image, Converter parent, GenOpts options, boolean write) {
-		this.alpha = options.alpha;
-		this.targetAcc = options.targetAcc;
-		this.maxGen = options.maxGen;
-		this.rand = new Rand(parent.seed);
-		// TODO: Horrible idea storing the shape for rollback but oh well
-		this.prevState = new Triangle();
+    private Generator(GenOpts options) {
+        this.alpha = options.alpha;
+        this.targetAcc = options.targetAcc;
+        this.maxGen = options.maxGen;
+        this.rand = new Rand(options.seed);
+        this.maxRange = options.maxRange;
+        this.maxOut = options.maxOut;
+        this.retainPixmap = options.retainPixmap;
+    }
 
-		if (write) {
-			// TODO: Might need to lock the file?
-			Fi tempFile = Fi.tempFile(Integer.toHexString(this.hashCode()));
-			tempFile.writePng(image);
-			this.loadPath = tempFile;
-			image.dispose();
-		} else {
-			this.original = image;
-			this.mutated = new MutateMap(image);
-		}
+	public Generator(Pixmap image, GenOpts options) {
+        this(options);
+        this.original = image;
+        this.mutated = new MutateMap(image);
 	}
 
-	public void prepare() {
-		int r = 0, g = 0, b = 0;
-		for (int x = 0; x < this.original.width; x++) {
-			for (int y = 0; y < this.original.height; y++) {
-				int col = original.getRaw(x, y);
-				r += Color.ri(col);
-				g += Color.gi(col);
-				b += Color.bi(col);
+    public Generator(Prov<Pixmap> pixmapProv, GenOpts options) {
+        this(options);
+        this.pixmapProv = pixmapProv;
+    }
 
-			}
-		}
-		int size = this.original.width * this.original.height;
-		r = Mathf.round((float)r/size);
-		g = Mathf.round((float)g/size);
-		b = Mathf.round((float)b/size);
-		this.mutated.fill(Color.packRgba(r, g, b, 255));
-		history.add(new FillShape(r, g, b));
-		this.curRaw = this.mutated.fullDiff();
+    // TODO Constructor for non-prov version too
+
+    public Generator(Prov<Pixmap> pixmapProv, Prov<Pixmap> continueProv, GenOpts options) {
+        this(pixmapProv, options);
+        this.continueProv = continueProv;
+    }
+
+	private void prepare() {
+        if (this.pixmapProv != null) {
+            this.original = this.pixmapProv.get();
+            this.mutated = new MutateMap(this.original);
+        }
+        if (this.continueProv != null) {
+            this.mutated.draw(this.continueProv.get());
+        } else {
+            int r = 0, g = 0, b = 0;
+            for (int x = 0; x < this.original.width; x++) {
+                for (int y = 0; y < this.original.height; y++) {
+                    int col = original.getRaw(x, y);
+                    r += Color.ri(col);
+                    g += Color.gi(col);
+                    b += Color.bi(col);
+
+                }
+            }
+            int size = this.original.width * this.original.height;
+            r = Mathf.round((float)r/size);
+            g = Mathf.round((float)g/size);
+            b = Mathf.round((float)b/size);
+            this.mutated.fill(Color.packRgba(r, g, b, 255));
+            FillShape fill = new FillShape(r, g, b);
+            fill.mutate(this, this.rand);
+            history.add(fill);
+        }
+        this.curRaw = this.mutated.fullDiff();
 		this.generation.getAndIncrement();
 	}
 
 	public Seq<Shape> start() {
 		synchronized (this) {
 			if (this.state != GenState.Ready) throw new IllegalStateException("Generator either started or done");
-			this.state = GenState.Start;
+			this.state = GenState.Started;
 			this.timings.add(Time.time);
 		}
+        this.prepare();
 		while (generation.getAndIncrement() < maxGen && this.acc() < targetAcc) {
 			// Stop and cleanup if interrupted
 			if (Thread.currentThread().isInterrupted()) {
@@ -118,17 +139,28 @@ public class Generator implements Callable<Seq<Shape>> {
 				this.timings.add(Time.time);
 			}
 		}
-		synchronized (this) {
-			this.state = GenState.Done;
-		}
-
 		Log.debug("Generator @ Finished with @/@ shapes", this, history.size, this.maxGen);
 		// TODO: Dispose the mutated pixmap too
 //		new Fi("gen-"+Mathf.random(1000)+".png").writePng(this.mutated);
-		this.mutated.dispose();
+        if (!this.retainPixmap) {
+            this.mutated.dispose();
+        }
 		this.original.dispose();
+        synchronized (this) {
+            this.state = GenState.Done;
+        }
 		return this.history;
 	}
+
+    public Pixmap getResult() {
+        synchronized (this) {
+            if (this.state != GenState.Done) throw new IllegalStateException("Generator not done");
+        }
+        if (this.mutated.isDisposed()) return null;
+        Pixmap copy = this.mutated.copy();
+        this.mutated.dispose();
+        return copy;
+    }
 
 	private Shape getBestShape() {
 		Shape shape = new Triangle();
@@ -181,18 +213,6 @@ public class Generator implements Callable<Seq<Shape>> {
 		return best;
 	}
 
-	@Override
-	public Seq<Shape> call() {
-//		Log.info("I have been summoned");
-		if (this.original == null) {
-			this.original = new Pixmap(loadPath);
-			this.mutated = new MutateMap(this.original);
-			this.loadPath.delete();
-		}
-		this.prepare();
-		return this.start();
-	}
-
 	public int getMaxGen() {
 		return this.maxGen;
 	}
@@ -202,12 +222,12 @@ public class Generator implements Callable<Seq<Shape>> {
 	}
 
 	public synchronized float rate() {
-		if (this.state != GenState.Start) return 0;
+		if (this.state != GenState.Started) return 0;
 		return this.timings.getCount() / (Time.time - this.timings.oldest());
 	}
 
 	public synchronized float timeToCompletion() {
-		if (this.state != GenState.Start) return -1;
+		if (this.state != GenState.Started) return -1;
 		int cur = this.generation.get();
 		return (float) (this.maxGen - cur) / this.rate() / Time.toSeconds;
 	}
@@ -222,17 +242,27 @@ public class Generator implements Callable<Seq<Shape>> {
 	}
 
 	public static class GenOpts {
-		public final int alpha;
-		public int maxGen;
-		public float targetAcc = 0.99f;
+        public int seed;
+        public int maxGen;
+        public boolean retainPixmap = false;
+        public float targetAcc = 0.99f;
+        public final int alpha;
+        public int maxRange = 20;
+        public int maxOut = 16;
 
 		public GenOpts(int alpha, int maxGen) {
 			this.alpha = Mathf.clamp(alpha, 0, 255);
 			this.maxGen = maxGen;
 		}
+
+        public GenOpts(int alpha, int maxGen, int maxOut, boolean retainPixmap) {
+            this(alpha, maxGen);
+            this.maxOut = maxOut;
+            this.retainPixmap = retainPixmap;
+        }
 	}
 
 	public enum GenState {
-		Ready, Start, Done
+        Ready, Started, Done
 	}
 }

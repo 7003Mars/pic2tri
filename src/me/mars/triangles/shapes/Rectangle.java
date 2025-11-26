@@ -8,7 +8,6 @@ import me.mars.triangles.MutateMap;
 
 
 public class Rectangle extends Shape{
-	public static final int max = 16;
 	public int x1, y1, x2, y2;
 
 	@Override
@@ -17,9 +16,9 @@ public class Rectangle extends Shape{
 		int h = context.original.height-1;
 		do {
 			this.x1 = rand.random(w);
-			this.x1 = this.x1 + rand.random(-max, max);
+			this.x1 = this.x1 + rand.random(-context.maxRange, context.maxRange);
 			this.y1 = rand.random(h);
-			this.y2 = this.y1 + rand.random(-max, max);
+			this.y2 = this.y1 + rand.random(-context.maxRange, context.maxRange);
 		} while (this.invalid());
 	}
 
@@ -28,9 +27,9 @@ public class Rectangle extends Shape{
 		int w = context.original.width-1;
 		int h = context.original.height-1;
 		do {
-			float rx = rand.nextFloat()*max - max/2f;
+			float rx = rand.nextFloat()*context.maxRange - context.maxRange/2f;
 			int cx = (rx > 0) ? Mathf.ceilPositive(rx) : Mathf.floor(rx);
-			float ry = rand.nextFloat()*max - max/2f;
+			float ry = rand.nextFloat()*context.maxRange - context.maxRange/2f;
 			int cy = (ry > 0) ? Mathf.ceilPositive(ry) : Mathf.floor(ry);
 			if (rand.nextBoolean()) {
 				this.x1 = Mathf.clamp(this.x1 + cx, 0, w);
@@ -42,7 +41,15 @@ public class Rectangle extends Shape{
 		} while (this.invalid());
 	}
 
-	@Override
+    @Override
+    public void translate(int x, int y) {
+        this.x1 += x;
+        this.x2 += x;
+        this.y1 += y;
+        this.y2 += y;
+    }
+
+    @Override
 	public boolean invalid() {
 		return this.y1 == this.y2 || this.x1 == this.x2;
 	}
