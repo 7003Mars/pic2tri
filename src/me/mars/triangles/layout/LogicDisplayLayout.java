@@ -8,6 +8,7 @@ import arc.struct.Bits;
 import arc.struct.IntSeq;
 import arc.struct.Seq;
 import arc.struct.StringMap;
+import arc.util.Log;
 import me.mars.triangles.shapes.Shape;
 import mindustry.content.Blocks;
 import mindustry.game.Schematic;
@@ -43,7 +44,7 @@ public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
 			jump 0 equal e 1
 			wait 1e-4
 			control enabled display1 1 0 0 0
-			set d 0
+			set j 0
 			""".split("\n");
     // Can't use wait instructions due to accumulator increasing.
     static final String[] repeat = """
@@ -51,17 +52,18 @@ public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
 			jump $ equal t @tick
 			""".split("\n");
     public static final String[] drawDelay = """
-            op add d d 1
-            jump $-1 lessThan d @
+            op add j j 1
+            jump $-1 lessThan j @
             """.split("\n");
-    public static final int MAX_SHAPES_PER_PROC;
-
-    static {
-        // The maximum shapes possible are when there are 0 repeats at all.
-        int freeInstructions = LExecutor.maxInstructions - multiStart.length - drawDelay.length;
-        freeInstructions-= Mathf.ceilPositive(freeInstructions/256f);
-        MAX_SHAPES_PER_PROC = freeInstructions/2;
+    // The maximum shapes possible are when there are 0 repeats at all.
+    private static int maxShapesForProc(int procIndex) {
+        int maxFreeInstructions = LExecutor.maxInstructions - multiStart.length - drawDelay.length;
+        int freeInstructions = maxFreeInstructions - repeat.length * procIndex;
+        // Every 256 instructions we need to flush once
+        freeInstructions -= Mathf.ceilPositive(freeInstructions/256f);
+        return freeInstructions/2;
     }
+    public static final int MAX_SHAPES_PER_PROC = maxShapesForProc(0);
 
     protected Bits occupied = new Bits();
 
@@ -146,7 +148,7 @@ public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
         int maxFreeInstructions = LExecutor.maxInstructions - multiStart.length - drawDelay.length;
         int total = 0;
         /*
-        The size of delay instructions for n processors follows the sequence 0, 2, 4, 6, 8, ..., 2(n-1)
+        The size of repeat instructions for n processors follows the sequence 0, 2, 4, 6, 8, ..., 2(n-1)
          */
         for (int i = 0; i < procs; i++) {
             int freeInstructions = maxFreeInstructions - repeat.length * i;
@@ -224,29 +226,59 @@ public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
         }
 
         int procIndex = 0;
+        // TODO Need better variable names for this.
+        // This variable is what we modulo procIndex against. It updates once an entire cycle has been completed
+        int freeProcLimit = processors;
+        // This is the live counter of how many processors will be usable at the end of a cycle.
+        int freeProcs = freeProcLimit;
+        // TMP Removeme
+        int tmp = -1;
+        // ENDTMP
         for (Shape shape : shapes) {
+            tmp += 1;
             CodeBuilder builder = code.get(procIndex);
             builder.appendShape(shape);
             shapeCounter.incr(procIndex, 1);
             int count = shapeCounter.get(procIndex);
-            int procMaxShapes = MAX_SHAPES_PER_PROC-procIndex*(repeat.length/2);
+            int procMaxShapes = maxShapesForProc(procIndex);
             boolean advance = count % 128 == 0 || count >= procMaxShapes;
             if (advance) {
                 if (count % 128 == 0) {
                     builder.appendLine("drawflush display1");
                 }
-                procIndex = (procIndex+1)%processors;
+                if (count >= procMaxShapes) {
+                    freeProcs -= 1;
+                    Log.info("Processor @/@ is full(@/@)", procIndex+1, freeProcLimit, count, procMaxShapes);
+                }
+                procIndex = (procIndex+1)%freeProcLimit;
+                if (procIndex == 0) {
+                    Log.info("Resetting  limit from @ to @", freeProcLimit, freeProcs);
+                    // Start of new cycle, apply new limits;
+                    freeProcLimit = freeProcs;
+                    if (freeProcLimit < 0) {
+                        Log.err("All processors occupied but there are more shapes to fit");
+//                        Log.err("Something went wrong, but we have @/@ shapes, @ left", tmp, shapes.size, shapes.size-tmp);
+                        break;
+                    }
+                }
             }
         }
         // Make the ending draws also take up 128 ticks.
         for (int i = 0; i < shapeCounter.size; i++) {
+            if (shapeCounter.get(i) % 128 == 0) continue; // Perfectly aligned, no need for this delayed flush.
             CodeBuilder builder = code.get(i);
-            int remaining = 128-(shapeCounter.get(i) % 128);
+            int remaining = 128-(shapeCounter.get(i) % 128) - 1 /*Just entering the loop already takes 2 instructions*/;
             for (String line : drawDelay) {
                 builder.appendLine(line.replace("@", String.valueOf(remaining)));
             }
             builder.appendLine("drawflush display1");
         }
+
+        for (int i = 0; i < processors; i++) {
+            int procMaxShapes = MAX_SHAPES_PER_PROC - i*(repeat.length/2);
+            Log.info("Proc @, @/@", i, shapeCounter.get(i), procMaxShapes);
+        }
+
         return code;
     }
 
