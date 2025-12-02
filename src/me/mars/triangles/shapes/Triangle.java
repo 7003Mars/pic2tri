@@ -49,30 +49,30 @@ public class Triangle extends Shape{
 	public void mutate(Generator context, Rand rand) {
 		int w = context.original.width - 1;
 		int h = context.original.height - 1;
-		boolean p1In = this.x1 >= 0 && this.x1 < w && this.y1 >= 0 && this.y1 < h;
-		boolean p2In = this.x2 >= 0 && this.x2 < w && this.y2 >= 0 && this.y2 < h;
-		boolean p3In = this.x3 >= 0 && this.x3 < w && this.y3 >= 0 && this.y3 < h;
+		boolean p1In = this.x1 >= 0 && this.x1 <= w && this.y1 >= 0 && this.y1 <= h;
+		boolean p2In = this.x2 >= 0 && this.x2 <= w && this.y2 >= 0 && this.y2 <= h;
+		boolean p3In = this.x3 >= 0 && this.x3 <= w && this.y3 >= 0 && this.y3 <= h;
 		int bounds;
 		do {
-			float rx = rand.nextFloat()*context.maxRange - context.maxRange/2f;
+			float rx = rand.nextFloat()*context.maxRange*2 - context.maxRange;
 			int cx = (rx > 0) ? Mathf.ceilPositive(rx) : Mathf.floor(rx);
-			float ry = rand.nextFloat()*context.maxRange - context.maxRange/2f;
+			float ry = rand.nextFloat()*context.maxRange*2 - context.maxRange;
 			int cy = (ry > 0) ? Mathf.ceilPositive(ry) : Mathf.floor(ry);
 			switch (rand.random(2)) {
 				case 0 -> {
 					bounds = p2In || p3In ? context.maxOut : 0;
-					this.x1 = Mathf.clamp(this.x1+cx, -bounds, w-1+bounds);
-					this.y1 = Mathf.clamp(this.y1+cy, -bounds, h-1+bounds);
+					this.x1 = Mathf.clamp(this.x1+cx, -bounds, w+bounds);
+					this.y1 = Mathf.clamp(this.y1+cy, -bounds, h+bounds);
 				}
 				case 1 -> {
 					bounds = p1In || p3In ? context.maxOut : 0;
-					this.x2 = Mathf.clamp(this.x2+cx, -bounds, w-1+bounds);
-					this.y2 = Mathf.clamp(this.y2+cy, -bounds, h-1+bounds);
+					this.x2 = Mathf.clamp(this.x2+cx, -bounds, w+bounds);
+					this.y2 = Mathf.clamp(this.y2+cy, -bounds, h+bounds);
 				}
 				case 2 -> {
 					bounds = p1In || p2In ? context.maxOut: 0;
-					this.x3 = Mathf.clamp(this.x3+cx, -bounds, w-1+bounds);
-					this.y3 = Mathf.clamp(this.y3+cy, -bounds, h-1+bounds);
+					this.x3 = Mathf.clamp(this.x3+cx, -bounds, w+bounds);
+					this.y3 = Mathf.clamp(this.y3+cy, -bounds, h+bounds);
 				}
 			}
 		} while (invalid());
@@ -133,6 +133,9 @@ public class Triangle extends Shape{
 			if (x2 == x1) {
 				// Points probably lie on a line, skip this unlucky run
 //				Log.warn("Whaa " + this);
+                pixmap.pointPool.free(p1);
+                pixmap.pointPool.free(p2);
+                pixmap.pointPool.free(p3);
 				return;
 			}
 			if (x2 > x1) {
