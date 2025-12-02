@@ -37,9 +37,9 @@ public class Triangle extends Shape{
 		do {
 			this.x1 = rand.random(w);
 			this.x2 = Mathf.clamp(this.x1 + rand.random(-context.maxRange, context.maxRange), 0, w);
-			this.x3 = Mathf.clamp(this.x1 + rand.random(-context.maxRange, context.maxRange), 0, h);
+			this.x3 = Mathf.clamp(this.x1 + rand.random(-context.maxRange, context.maxRange), 0, w);
 			this.y1 = rand.random(h);
-			this.y2 = Mathf.clamp(this.y1 + rand.random(-context.maxRange, context.maxRange), 0, w);
+			this.y2 = Mathf.clamp(this.y1 + rand.random(-context.maxRange, context.maxRange), 0, h);
 			this.y3 = Mathf.clamp(this.y1 + rand.random(-context.maxRange, context.maxRange), 0, h);
 		} while (invalid());
 
