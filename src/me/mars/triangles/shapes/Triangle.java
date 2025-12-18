@@ -36,6 +36,7 @@ public class Triangle extends Shape{
 		int h = context.original.height - 1;
 		do {
 			this.x1 = rand.random(w);
+            // Set the other 2 points some distance away from the first
 			this.x2 = Mathf.clamp(this.x1 + rand.random(-context.maxRange, context.maxRange), 0, w);
 			this.x3 = Mathf.clamp(this.x1 + rand.random(-context.maxRange, context.maxRange), 0, w);
 			this.y1 = rand.random(h);
@@ -223,6 +224,7 @@ public class Triangle extends Shape{
 		int sign = ltr ? 1 : -1;
 		for (int i = 0; i < 4; i++) {
 			float area = -vec.crs(x+0.5f-rx, y+0.5f-ry);
+			// https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/rasterization-stage.html
 			if (area == 0 ? (vec.y > 0 || (vec.y == 0 && vec.x > 0)) : area > 0) {
 				return x;
 			}

@@ -5,7 +5,7 @@ displayName: "PicToTri"
 name: "triangles"
 
 #your name
-author: "Mars#7003"
+author: "Mars0x0"
 
 #the fully qualified main class of the mod
 main: "me.mars.triangles.PicToTri"

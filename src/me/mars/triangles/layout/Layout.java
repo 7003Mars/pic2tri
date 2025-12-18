@@ -1,6 +1,5 @@
 package me.mars.triangles.layout;
 
-import arc.math.Mathf;
 import arc.math.geom.Rect;
 import arc.struct.Seq;
 import arc.struct.StringMap;
@@ -37,7 +36,7 @@ public abstract class Layout<T> {
 
     public abstract ImageChunk<T> getChunk(int x, int y);
 
-    public abstract Schematic build(Seq<Seq<Shape>> shapes); // TODO List<Shapes> should prob be a param
+    public abstract Schematic build(Seq<Seq<Shape>> shapes);
 
     public static class ImageChunk<T> {
         /** Chunk position */
