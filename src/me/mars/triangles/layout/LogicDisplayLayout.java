@@ -13,7 +13,6 @@ import me.mars.triangles.shapes.Shape;
 import mindustry.content.Blocks;
 import mindustry.game.Schematic;
 import mindustry.logic.LExecutor;
-import mindustry.world.Tile;
 import mindustry.world.blocks.logic.LogicBlock;
 import mindustry.world.blocks.logic.LogicDisplay;
 
@@ -182,11 +181,9 @@ public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
             schem.tiles.add(new Schematic.Stile(this.display, displayX, displayY, null, (byte) 0));
             for (int j = 0; j < requiredProcs; j++) {
                 Point2 pos = chunk.data.procs.get(j);
-                LogicBlock.LogicBuild lbuild = (LogicBlock.LogicBuild) Blocks.microProcessor.newBuilding();
-                lbuild.tile = new Tile(pos.x, pos.y);
-                lbuild.links.add(new LogicBlock.LogicLink(displayX, displayY, "display1", true));
-                lbuild.updateCode(code.get(j).toString());
-                schem.tiles.add(new Schematic.Stile(Blocks.microProcessor, pos.x, pos.y, lbuild.config(), (byte) 0));
+                ProcessorBuilder procBuilder = new ProcessorBuilder(pos.x, pos.y, code.get(j).toString());
+                procBuilder.addAbsoluteLink(displayX, displayY, "display1");
+                schem.tiles.add(procBuilder.getStile());
             }
         }
         // TODO Add linker block
