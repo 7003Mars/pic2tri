@@ -3,24 +3,18 @@ package me.mars.triangles.converter;
 import arc.files.Fi;
 import arc.graphics.Pixmap;
 import arc.struct.Seq;
-import arc.util.Log;
 import me.mars.triangles.Generator;
 import me.mars.triangles.layout.Layout;
 import me.mars.triangles.layout.LogicDisplayLayout;
 import me.mars.triangles.layout.TiledDisplayLayout;
 import me.mars.triangles.shapes.Shape;
-import mindustry.game.Schematic;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 
 import static me.mars.triangles.layout.LogicDisplayLayout.procRange;
 
 public class ImageConverter extends Converter {
-    private Seq<Future<Seq<Shape>>> results = new Seq<>();
-
     public Seq<Generator.GenOpts> options = new Seq<>();
-    public Seq<GenProgress> genProgs = new Seq<>();
 
     public ImageConverter(Layout<?> layout, Fi filePath) {
         super(layout, filePath);
@@ -32,7 +26,20 @@ public class ImageConverter extends Converter {
             } else if (chunk.data instanceof TiledDisplayLayout.ChunkData data) {
                 totalShapes = TiledDisplayLayout.totalShapes(data.procs);
             }
-            this.options.add(layout instanceof LogicDisplayLayout ? new Generator.GenOpts(175, totalShapes) : new Generator.GenOpts(175, totalShapes, 0, false));
+            if (layout instanceof LogicDisplayLayout) {
+                this.options.add(new Generator.GenOpts(175, totalShapes));
+            } else {
+                // TODO VERY IMPT
+                /*
+                This is a VERY bandaid fix to avoid seams between chunks.
+                Vertices with sharp edges often fail to draw, leading to the top and right sides of each chunk having a distinct area of no activity.
+                The proper fix would be to implement the top-left rasterisation check for bounds checks during mutations, allowing pixels to actually fill the whole space.
+
+                As of right now, we just extend maxout to 1.
+                This will likely lead to inaccuracies between what is generated and what is actually rendered, as triangles with flat edges that exceed their chunks can draw into other chunks
+                */
+                this.options.add(new Generator.GenOpts(175, totalShapes, 1, true));
+            }
         }
     }
 
@@ -53,12 +60,15 @@ public class ImageConverter extends Converter {
     }
 
     @Override
-    public void submit() {
+    public ConverterTask submit() {
+        // Resize and flip pixmap
         Pixmap origin = new Pixmap(this.filePath);
         Pixmap flipped = origin.flipY();
         origin.dispose();
         Pixmap resized = new Pixmap(this.layout.imageWidth, this.layout.imageHeight);
         resized.draw(flipped, 0, 0, resized.width, resized.height, true);
+        Seq<CompletableFuture<Seq<Shape>>> futures = new Seq<>();
+        Seq<Generator> generators = new Seq<>();
         for (int i = 0; i < this.layout.chunks.size; i++) {
             Layout.ImageChunk<?> chunk = this.layout.chunks.get(i);
             // TODO possible precision loss here, check code again
@@ -68,46 +78,45 @@ public class ImageConverter extends Converter {
             /*TODO Lazy hack to get the correct pixel position, ideally doesn't assume all layout displays start at procRange */
             int ix = (int) ((chunk.chunkX-procRange) * (layout.imageWidth/layout.imageBounds.width));
             int iy = (int) ((chunk.chunkY-procRange) * (layout.imageHeight/layout.imageBounds.height));
-            Log.info("Start @, @, w@ h@", ix, iy, iw, ih);
+//            Log.info("Start @, @, w@ h@", ix, iy, iw, ih);
             cropped.draw(resized, ix, iy, iw, ih, 0, 0, iw, ih);
             Generator gen = new Generator(saveTmpPixmap(cropped), options.get(i));
-            final GenProgress prog = new GenProgress() {
-                @Override
-                public Generator.GenState state() {
-                    return gen.getState();
-                }
-
-                @Override
-                public float progress() {
-                    return gen.cur();
-                }
-            };
-            genProgs.add(prog);
-            results.add(executor.submit(gen::start));
+            futures.add(CompletableFuture.supplyAsync(gen::start, executor));
+            generators.add(gen);
         }
+        resized.dispose();
+        return new ImageConverterTask(
+                this,
+                CompletableFuture.allOf(futures.toArray(CompletableFuture.class)).thenApply(ignored -> futures.map(CompletableFuture::join)),
+                generators
+        );
     }
 
-    @Override
-    public float totalProgress() {
-        return (float) this.genProgs.count(p -> p.state() == Generator.GenState.Done) /this.genProgs.size;
-    }
+    protected static class ImageConverterTask extends ConverterTask {
+        // Technically supposed to return a fresh Seq whenever genProg() is called but we cache one for perf
+        private final Seq<GeneratorProgress> genProg = new Seq<>();
 
-    @Override
-    public boolean complete() {
-        return this.genProgs.allMatch((conv) -> conv.state() == Generator.GenState.Done);
-    }
-
-
-    @Override
-    public Schematic build() {
-        Seq<Seq<Shape>> shapes = new Seq<>();
-        try {
-            for (Future<Seq<Shape>> task : this.results) {
-                shapes.add(task.get());
+        public ImageConverterTask(ImageConverter converter, CompletableFuture<Seq<Seq<Shape>>> results, Seq<Generator> generators) {
+            super(converter, results, generators);
+            for (int i = 0; i < this.generators.size; i++) {
+                genProg.add(new GeneratorProgress());
             }
-        } catch (ExecutionException | InterruptedException e) {
-            throw new RuntimeException(e);
         }
-        return this.layout.build(shapes);
+
+        @Override
+        public float progress() {
+            return (float) this.generators.count(gen -> gen.getState() == Generator.GenState.Done) /this.generators.size;
+        }
+
+        @Override
+        public Seq<GeneratorProgress> genProg() {
+            for (int i = 0; i < this.generators.size; i++) {
+                Generator gen = this.generators.get(i);
+                GeneratorProgress prog = this.genProg.get(i);
+                prog.genState = gen.getState();
+                prog.progress = (float) gen.cur() /gen.maxGen;
+            }
+            return this.genProg;
+        }
     }
 }
