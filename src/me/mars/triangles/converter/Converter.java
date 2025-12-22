@@ -3,22 +3,23 @@ package me.mars.triangles.converter;
 import arc.files.Fi;
 import arc.func.Prov;
 import arc.graphics.Pixmap;
+import arc.struct.Seq;
 import arc.util.ArcRuntimeException;
 import arc.util.OS;
 import arc.util.Threads;
 import me.mars.triangles.Generator;
-import me.mars.triangles.PicToTri;
 import me.mars.triangles.layout.Layout;
-import mindustry.game.Schematic;
+import me.mars.triangles.shapes.Shape;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
 public abstract class Converter {
     static final ExecutorService executor = Threads.executor("Image converter", OS.cores);
 
-    Layout<?> layout;
+    public Layout<?> layout;
     Fi filePath;
     public String name = "!NAME ME";
 
@@ -30,7 +31,7 @@ public abstract class Converter {
     /**
     Will dispose the provided pixmap
      */
-    static Prov<Pixmap> saveTmpPixmap(Pixmap pixmap) {
+    public static Prov<Pixmap> saveTmpPixmap(Pixmap pixmap) {
         Fi tmpFile;
         try {
             tmpFile = new Fi(File.createTempFile("pic2tri", ".png"));
@@ -49,15 +50,30 @@ public abstract class Converter {
     }
 
 
-    public abstract void submit();
+    public abstract ConverterTask submit();
+    public static abstract class ConverterTask {
+        public Converter converter;
+        public CompletableFuture<Seq<Seq<Shape>>> results;
+        public Seq<Generator> generators;
 
-    public abstract float totalProgress();
-    public abstract boolean complete();
-    public abstract Schematic build();
+        public ConverterTask(me.mars.triangles.converter.Converter converter, CompletableFuture<Seq<Seq<Shape>>> results, Seq<Generator> generators) {
+            this.converter = converter;
+            this.results = results;
+            this.generators = generators;
+        }
 
-    public interface GenProgress {
-        Generator.GenState state();
-        float progress();
+
+        public boolean complete() {
+            return this.results.isDone();
+        }
+        public abstract float progress();
+        public abstract Seq<GeneratorProgress> genProg();
+    }
+
+    public static class GeneratorProgress {
+        // TODO
+        public Generator.GenState genState = Generator.GenState.Ready;
+        public float progress;
     }
 
     public static class UnsupportedLayoutException extends RuntimeException {
