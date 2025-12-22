@@ -17,6 +17,11 @@ public class CodeBuilder {
     int lineCount = 0;
 
     public void appendLine(String line) {
+        // Labels don't count as instructions
+        if (line.endsWith(":")) {
+            builder.append(line).append("\n");
+            return;
+        }
         // The functional version of matcher.replaceAll() is java 9+ only ):
         Matcher matcher = pattern.matcher(line);
         StringBuffer result = new StringBuffer();
