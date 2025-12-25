@@ -68,7 +68,9 @@ public class GifConverter extends Converter {
                 /*TODO Lazy hack to get the correct pixel position, ideally doesn't assume all layout displays start at procRange */
                 int ix = (int) ((chunk.chunkX - procRange) * (layout.imageWidth / layout.imageBounds.width));
                 int iy = (int) ((chunk.chunkY - procRange) * (layout.imageHeight / layout.imageBounds.height));
-                merged.draw(imageConverterTask.generators.get(i++).getResult(), 0, 0, iw, ih, ix, iy, iw, ih);
+                Pixmap cropped = imageConverterTask.generators.get(i++).getResult();
+                merged.draw(cropped, 0, 0, iw, ih, ix, iy, iw, ih);
+                cropped.dispose();
             }
             synchronized (this) {
                 Log.info("Adding @ chunks", results.size);
@@ -79,9 +81,10 @@ public class GifConverter extends Converter {
         for (Fi file : this.files) {
             Pixmap frame = new Pixmap(file);
             Pixmap flipped = frame.flipY();
-            frame.dispose();
             Pixmap resized = new Pixmap(this.layout.imageWidth, this.layout.imageHeight);
             resized.draw(flipped, 0, 0, resized.width, resized.height, true);
+            frame.dispose();
+            flipped.dispose();
             Prov<Pixmap> pixmapProv = Converter.saveTmpPixmap(resized);
             result = result.thenCompose(res -> {
                 synchronized (this) {
@@ -104,19 +107,19 @@ public class GifConverter extends Converter {
         );
     }
 
-    CompletableFuture<GeneratorResult> processFrame(Prov<Pixmap> frame, Pixmap prev) {
+    CompletableFuture<GeneratorResult> processFrame(Prov<Pixmap> frameProv, Pixmap prev) {
         CompletableFuture<GeneratorResult> fresh = CompletableFuture.supplyAsync(() -> {
-            Generator gen = new Generator(frame, opts);
-            Seq<Shape> shapes = gen.start();
+            Generator gen = new Generator(opts);
+            Seq<Shape> shapes = gen.start(frameProv.get());
             return new GeneratorResult(shapes, gen.acc(), gen.getResult());
         }, Converter.executor);
         CompletableFuture<GeneratorResult> continued = CompletableFuture.supplyAsync(() -> {
-            Generator gen = new Generator(frame, () -> prev,opts);
-            Seq<Shape> shapes = gen.start();
+            Generator gen = new Generator(opts);
+            Seq<Shape> shapes = gen.start(frameProv.get(), prev);
             return new GeneratorResult(shapes, gen.acc(), gen.getResult());
         }, Converter.executor);
         return fresh.thenCombine(continued, (first, second) -> {
-            // Prefer the continued frame if both results tie
+            // Prefer the continued frame if both results tie. Dispose the worse performing result's pixmap.
             if (second.acc > first.acc) {
                 Log.info("Continued won: Cont: @ Fresh: @", second.acc, first.acc);
                 first.result.dispose();

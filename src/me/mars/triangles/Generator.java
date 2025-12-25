@@ -1,6 +1,5 @@
 package me.mars.triangles;
 
-import arc.func.Prov;
 import arc.graphics.Color;
 import arc.graphics.Pixmap;
 import arc.math.Mathf;
@@ -8,6 +7,7 @@ import arc.math.Rand;
 import arc.math.WindowedMean;
 import arc.struct.Seq;
 import arc.util.Log;
+import arc.util.Nullable;
 import arc.util.Time;
 import me.mars.triangles.shapes.FillShape;
 import me.mars.triangles.shapes.Shape;
@@ -32,15 +32,13 @@ public class Generator {
     public final int maxRange;
     public final int maxOut;
 
-    private Prov<Pixmap> pixmapProv;
+	private boolean retainPixmap;
 	public Pixmap original;
-    private Prov<Pixmap> continueProv;
-    private boolean retainPixmap;
 	private MutateMap mutated;
 
 	private Seq<Shape> history = new Seq<>();
 
-    private Generator(GenOpts options) {
+    public Generator(GenOpts options) {
         this.alpha = options.alpha;
         this.targetAcc = options.targetAcc;
         this.maxGen = options.maxGen;
@@ -50,31 +48,13 @@ public class Generator {
         this.retainPixmap = options.retainPixmap;
     }
 
-	public Generator(Pixmap image, GenOpts options) {
-        this(options);
-        this.original = image;
-        this.mutated = new MutateMap(image);
-	}
-
-    public Generator(Prov<Pixmap> pixmapProv, GenOpts options) {
-        this(options);
-        this.pixmapProv = pixmapProv;
-    }
-
-    // TODO Constructor for non-prov version too
-
-    public Generator(Prov<Pixmap> pixmapProv, Prov<Pixmap> continueProv, GenOpts options) {
-        this(pixmapProv, options);
-        this.continueProv = continueProv;
-    }
-
-	private void prepare() {
-        if (this.pixmapProv != null) {
-            this.original = this.pixmapProv.get();
-            this.mutated = new MutateMap(this.original);
-        }
-        if (this.continueProv != null) {
-            this.mutated.draw(this.continueProv.get());
+	private void prepare(Pixmap continuation) {
+		if (continuation != null) {
+			if (continuation.width != this.original.width || continuation.height != this.original.height) {
+				throw new RuntimeException("Continuation must be of the same dimensions");
+			}
+            this.mutated.draw(continuation);
+			continuation.dispose();
         } else {
             int r = 0, g = 0, b = 0;
             for (int x = 0; x < this.original.width; x++) {
@@ -99,13 +79,27 @@ public class Generator {
 		this.generation.getAndIncrement();
 	}
 
-	public Seq<Shape> start() {
+	public Seq<Shape> start(Pixmap image) {
+		return this.start(image, null);
+	}
+
+	/**
+	 * Disposes the provided pixmaps
+	 * @param image The target image the generator tries to reach
+	 * @param continuation If provided, the generator starts with the continuation as the canvas
+	 * @return The shapes generated
+	 */
+	public Seq<Shape> start(Pixmap image, @Nullable Pixmap continuation) {
 		synchronized (this) {
 			if (this.state != GenState.Ready) throw new IllegalStateException("Generator either started or done");
 			this.state = GenState.Started;
 			this.timings.add(Time.time);
 		}
-        this.prepare();
+		this.original = new Pixmap(image.width, image.height);
+		this.original.draw(image);
+		image.dispose();
+		this.mutated = new MutateMap(this.original);
+        this.prepare(continuation);
 		while (generation.getAndIncrement() < maxGen && this.acc() < targetAcc) {
 			// Stop and cleanup if interrupted
 			if (Thread.currentThread().isInterrupted()) {
@@ -140,8 +134,6 @@ public class Generator {
 			}
 		}
 		Log.debug("Generator @ Finished with @/@ shapes", this, history.size, this.maxGen);
-		// TODO: Dispose the mutated pixmap too
-//		new Fi("gen-"+Mathf.random(1000)+".png").writePng(this.mutated);
         if (!this.retainPixmap) {
             this.mutated.dispose();
         }
@@ -247,7 +239,9 @@ public class Generator {
         public boolean retainPixmap = false;
         public float targetAcc = 0.99f;
         public final int alpha;
+        /** How far a vertex is able to shift when randomised */
         public int maxRange = 20;
+        /** By how much can a vertex exceed the bounds of the pixmap*/
         public int maxOut = 16;
 
 		public GenOpts(int alpha, int maxGen) {

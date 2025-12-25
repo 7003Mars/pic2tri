@@ -1,6 +1,7 @@
 package me.mars.triangles.converter;
 
 import arc.files.Fi;
+import arc.func.Prov;
 import arc.graphics.Pixmap;
 import arc.struct.Seq;
 import me.mars.triangles.Generator;
@@ -64,9 +65,10 @@ public class ImageConverter extends Converter {
         // Resize and flip pixmap
         Pixmap origin = new Pixmap(this.filePath);
         Pixmap flipped = origin.flipY();
-        origin.dispose();
         Pixmap resized = new Pixmap(this.layout.imageWidth, this.layout.imageHeight);
         resized.draw(flipped, 0, 0, resized.width, resized.height, true);
+        origin.dispose();
+        flipped.dispose();
         Seq<CompletableFuture<Seq<Shape>>> futures = new Seq<>();
         Seq<Generator> generators = new Seq<>();
         for (int i = 0; i < this.layout.chunks.size; i++) {
@@ -80,8 +82,9 @@ public class ImageConverter extends Converter {
             int iy = (int) ((chunk.chunkY-procRange) * (layout.imageHeight/layout.imageBounds.height));
 //            Log.info("Start @, @, w@ h@", ix, iy, iw, ih);
             cropped.draw(resized, ix, iy, iw, ih, 0, 0, iw, ih);
-            Generator gen = new Generator(saveTmpPixmap(cropped), options.get(i));
-            futures.add(CompletableFuture.supplyAsync(gen::start, executor));
+            Generator gen = new Generator(options.get(i));
+            Prov<Pixmap> pixmapProv = saveTmpPixmap(cropped);
+            futures.add(CompletableFuture.supplyAsync(() -> gen.start(pixmapProv.get()), executor));
             generators.add(gen);
         }
         resized.dispose();
