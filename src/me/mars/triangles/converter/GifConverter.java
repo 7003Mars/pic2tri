@@ -32,18 +32,14 @@ public class GifConverter extends Converter {
         if (!(layout instanceof TiledGifLayout)) {
             throw new UnsupportedLayoutException("Unsupported layout", true);
         }
-        Pixmap pixmap = new Pixmap(path);
-        int originalWidth = pixmap.width, originalHeight = pixmap.height;
-        pixmap.dispose();
+        ImageSize originalSize = ImageSize.getSize(path);
         Fi dir = path.parent();
         Seq<Fi> files = dir.findAll(f -> f.extension().equals(path.extension()));
         for (Fi file : files) {
-            pixmap = new Pixmap(file);
-            int width = pixmap.width, height = pixmap.height;
-            pixmap.dispose();
-            if (width != originalWidth || height != originalHeight) {
+            ImageSize imageSize = ImageSize.getSize(file);
+            if (imageSize.width != originalSize.width || imageSize.height != originalSize.height) {
                 throw new UnsupportedLayoutException(Strings.format("The image @ has size (@, @) but target has size (@, @)",
-                        width, height, originalWidth, originalHeight));
+                        imageSize.width, imageSize.height, originalSize.width, originalSize.height));
             }
         }
     }
@@ -91,7 +87,7 @@ public class GifConverter extends Converter {
                     this.results.add(res.shapes);
                 }
                 // TODO REMOVEME
-                new Fi("gif/prev-"+ file.name()).writePng(res.result);
+//                new Fi("gif/prev-"+ file.name()).writePng(res.result);
                 return processFrame(pixmapProv, res.result);
             });
         }
@@ -121,11 +117,11 @@ public class GifConverter extends Converter {
         return fresh.thenCombine(continued, (first, second) -> {
             // Prefer the continued frame if both results tie. Dispose the worse performing result's pixmap.
             if (second.acc > first.acc) {
-                Log.info("Continued won: Cont: @ Fresh: @", second.acc, first.acc);
+                Log.debug("Continued won: Cont: @ Fresh: @", second.acc, first.acc);
                 first.result.dispose();
                 return second;
             } else {
-                Log.info("Fresh won: Cont: @ Fresh: @", second.acc, first.acc);
+                Log.debug("Fresh won: Cont: @ Fresh: @", second.acc, first.acc);
                 second.result.dispose();
                 return first;
             }
