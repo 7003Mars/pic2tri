@@ -7,8 +7,7 @@ import me.mars.triangles.shapes.Shape;
 import mindustry.game.Schematic;
 import mindustry.world.blocks.logic.LogicDisplay;
 
-// TODO assume Layout is specialised for logic processors for now
-// TODO Remove above comment
+
 public abstract class Layout<T> {
     public int xChunks;
     public int yChunks;

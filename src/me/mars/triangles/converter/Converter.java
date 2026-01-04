@@ -71,7 +71,6 @@ public abstract class Converter {
     }
 
     public static class GeneratorProgress {
-        // TODO
         public Generator.GenState genState = Generator.GenState.Ready;
         public float progress;
     }
@@ -80,7 +79,6 @@ public abstract class Converter {
         public boolean unsupportedType = false;
         public String reason;
 
-        // TODO constructor
         public UnsupportedLayoutException(String reason) {
             this.reason = reason;
         }

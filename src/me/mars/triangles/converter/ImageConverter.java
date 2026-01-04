@@ -56,7 +56,7 @@ public class ImageConverter extends Converter {
                 throw new UnsupportedLayoutException("Converter only supports 29 processors per chunk");
             }
         } else {
-            throw new UnsupportedLayoutException("Unsupported type", true);
+            throw new UnsupportedLayoutException("Unsupported layout", true);
         }
     }
 

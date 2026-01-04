@@ -10,6 +10,7 @@ import arc.struct.Seq;
 import arc.struct.StringMap;
 import arc.util.Log;
 import me.mars.triangles.shapes.Shape;
+import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.game.Schematic;
 import mindustry.logic.LExecutor;
@@ -17,10 +18,11 @@ import mindustry.world.blocks.logic.LogicBlock;
 import mindustry.world.blocks.logic.LogicDisplay;
 
 public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
-    public static int procRange = 8;// TODO IMPT REMOVE THE MAGIC NUMBER, USE THE CALC ->  (int) (((LogicBlock)Blocks.microProcessor).range/ Vars.tilesize);
-    public static int MAX_PROCS; // we can have 29 simultaneous processors before their flushes overlap(each proc flushes in 2t delays)
+    // region Mlog code
+    public static int procRange = (int) (((LogicBlock)Blocks.microProcessor).range/ Vars.tilesize);
+    public static int MAX_PROCS;
     static {
-        // Every processor has a "cooldown" of 257(256 draws + 1 flush) before they will flush again, so we can cram that continuous draw flushes in that cooldown time
+        // Every processor has a "cooldown" of 257(256 draws + 1 flush)/2 ticks before they will flush again, so we can cram that many continuous draw flushes in that cooldown time
         MAX_PROCS = 257/((LogicBlock)Blocks.microProcessor).instructionsPerTick;
     }
 
@@ -63,6 +65,7 @@ public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
         return freeInstructions/2;
     }
     public static final int MAX_SHAPES_PER_PROC = maxShapesForProc(0);
+    // endregion
 
     protected Bits occupied = new Bits();
 
@@ -91,7 +94,7 @@ public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
         }
     }
 
-    // REGION Ui methods
+    // region Ui methods
     public int requestProcs(int selX, int selY, int target) {
         target = Math.max(Math.min(target, MAX_PROCS), 1);
         ImageChunk<ChunkData> chunk = this.getChunk(selX, selY);
@@ -121,7 +124,7 @@ public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
             }
             if (!this.occupied.get(y * this.width + x) && within(chunk.chunkX, chunk.chunkY, x, y)) {
                 this.occupied.set(y * this.width + x);
-                data.procs.add(new Point2(x, y)); // TODO Maybe pool this
+                data.procs.add(new Point2(x, y));
                 this.preview.tiles.add(new Schematic.Stile(Blocks.microProcessor, x, y, null, (byte) 0));
             }
         }
@@ -133,7 +136,6 @@ public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
         int chunkX = (x - offset)/this.display.size;
         int chunkY = (y - offset)/this.display.size;
         if (chunkX < 0 || chunkX >= this.xChunks || chunkY < 0 || chunkY >= this.yChunks) {
-            // TODO >= or >?
             return null;
         }
         return this.chunks.get(chunkY * this.xChunks + chunkX);
@@ -159,7 +161,7 @@ public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
         return total;
     }
 
-    // ENDREGION
+    // endregion
 
     public static int procsRequired(int shapes) {
         // O(N^2) but who cares
@@ -177,7 +179,7 @@ public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
             int requiredProcs = procsRequired(shapes.get(i).size);
             assert requiredProcs <= chunk.data.procs.size;
             Seq<CodeBuilder> code = generateProcessorCode(requiredProcs, shapes.get(i));
-            int displayX = chunk.chunkX - display.sizeOffset, displayY = chunk.chunkY - display.sizeOffset; // TODO need to calc offset and whatnot
+            int displayX = chunk.chunkX - display.sizeOffset, displayY = chunk.chunkY - display.sizeOffset;
             schem.tiles.add(new Schematic.Stile(this.display, displayX, displayY, null, (byte) 0));
             for (int j = 0; j < requiredProcs; j++) {
                 Point2 pos = chunk.data.procs.get(j);
@@ -223,16 +225,11 @@ public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
         }
 
         int procIndex = 0;
-        // TODO Need better variable names for this.
         // This variable is what we modulo procIndex against. It updates once an entire cycle has been completed
-        int freeProcLimit = processors;
+        int curFreeProcs = processors;
         // This is the live counter of how many processors will be usable at the end of a cycle.
-        int freeProcs = freeProcLimit;
-        // TMP Removeme
-        int tmp = -1;
-        // ENDTMP
+        int appliedFreeProcs = curFreeProcs;
         for (Shape shape : shapes) {
-            tmp += 1;
             CodeBuilder builder = code.get(procIndex);
             builder.appendShape(shape);
             shapeCounter.incr(procIndex, 1);
@@ -244,15 +241,13 @@ public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
                     builder.appendLine("drawflush display1");
                 }
                 if (count >= procMaxShapes) {
-                    freeProcs -= 1;
-                    Log.info("Processor @/@ is full(@/@)", procIndex+1, freeProcLimit, count, procMaxShapes);
+                    appliedFreeProcs -= 1;
                 }
-                procIndex = (procIndex+1)%freeProcLimit;
+                procIndex = (procIndex+1)%curFreeProcs;
                 if (procIndex == 0) {
-                    Log.info("Resetting  limit from @ to @", freeProcLimit, freeProcs);
                     // Start of new cycle, apply new limits;
-                    freeProcLimit = freeProcs;
-                    if (freeProcLimit < 0) {
+                    curFreeProcs = appliedFreeProcs;
+                    if (curFreeProcs < 0) {
                         Log.err("All processors occupied but there are more shapes to fit");
 //                        Log.err("Something went wrong, but we have @/@ shapes, @ left", tmp, shapes.size, shapes.size-tmp);
                         break;
