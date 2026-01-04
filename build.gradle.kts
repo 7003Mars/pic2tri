@@ -1,5 +1,5 @@
+import org.gradle.kotlin.dsl.support.serviceOf
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.io.ByteArrayOutputStream
 import java.time.LocalTime
 
 plugins {
@@ -46,11 +46,11 @@ repositories {
     maven("https://raw.githubusercontent.com/Zelaux/MindustryRepo/master/repository")
     maven("https://maven.xpdustry.com/anuken")
 }
-val mindustryVersion by extra("v153")
+val mindustryVersion by extra("v154.3")
 val jabelVersion by extra("93fde537c7")
 val sdkRoot: String? by extra(System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT"))
 
-val archivesName = base.archivesName.get()
+val archivesName: String = base.archivesName.get()
 
 allprojects {
     tasks.withType<JavaCompile> {
@@ -86,32 +86,20 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-tasks.register("jarAndroid") {
+tasks.register<Exec>("jarAndroid") {
     dependsOn("shadowJar")
-    doLast{
-        if(sdkRoot == null || !File(sdkRoot!!).exists()) throw GradleException("No valid Android SDK found. Ensure that ANDROID_HOME is set to your Android SDK directory.")
+    if(sdkRoot == null || !File(sdkRoot!!).exists()) throw GradleException("No valid Android SDK found. Ensure that ANDROID_HOME is set to your Android SDK directory.")
 
-        val platformRoot = File("$sdkRoot/platforms/").listFiles()?.also { it.sort(); it.reverse() }?.find { File(it, "android.jar").exists()}
+    val platformRoot = File("$sdkRoot/platforms/").listFiles()?.also { it.sort(); it.reverse() }?.find { File(it, "android.jar").exists()}
+    if(platformRoot == null) throw GradleException("No android.jar found. Ensure that you have an Android platform installed.")
+    val d8Path = System.getenv("d8_path") ?: "d8"
+    // collect dependencies needed for desugaring
+    val dependencies = (
+            configurations.compileClasspath.get().toList() + configurations.runtimeClasspath.get().toList() + listOf(File(platformRoot, "android.jar"))
+            ).joinToString(" ") { "--classpath ${it.path}" }
+    workingDir(layout.buildDirectory.dir("libs"))
 
-        if(platformRoot == null) throw GradleException("No android.jar found. Ensure that you have an Android platform installed.")
-
-//      collect dependencies needed for desugaring
-        val dependencies =
-            (configurations.compileClasspath.get().toList() + configurations.runtimeClasspath.get().toList() +
-                    arrayOf(File(platformRoot, "android.jar")
-            )).joinToString(" ") { "--classpath ${it.path}" }
-//      dex and desugar files - this requires d8 in your PATH
-        val err = ByteArrayOutputStream()
-        val d8Path = System.getenv("d8_path") ?: "d8"
-        val res = exec {
-            commandLine("$d8Path $dependencies --min-api 14 --output ${archivesName}Android.jar ${archivesName}Desktop.jar".split(" "))
-            workingDir = File("$buildDir/libs")
-            errorOutput = err
-            isIgnoreExitValue = true
-        }
-        logger.warn("Errors: $err")
-        res.assertNormalExitValue()
-    }
+    commandLine("$d8Path $dependencies --min-api 14 --output ${archivesName}Android.jar ${archivesName}Desktop.jar".split(" "))
 }
 
 //tasks.named<Jar>("jar") {
@@ -145,9 +133,17 @@ tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJ
 tasks.register<Jar>("deploy") {
     dependsOn("shadowJar", "jarAndroid")
     archiveFileName.set("$archivesName.jar")
-    from(zipTree("${buildDir}/libs/${archivesName}Desktop.jar"), zipTree("$buildDir/libs/${archivesName}Android.jar"))
+    val name = archivesName
+    val buildDir = layout.buildDirectory
+    from(
+        buildDir.file("libs/${name}Desktop.jar").map { zipTree(it) },
+        buildDir.file("libs/${name}Android.jar").map { zipTree(it) }
+    )
+    val fs = project.serviceOf<FileSystemOperations>()
     doLast {
-        delete("$buildDir/libs/${archivesName}Desktop.jar", "$buildDir/libs/${archivesName}Android.jar")
+        fs.delete {
+            delete(buildDir.file("libs/${name}Desktop.jar"), buildDir.file("libs/${name}Android.jar"))
+        }
     }
 }
 
