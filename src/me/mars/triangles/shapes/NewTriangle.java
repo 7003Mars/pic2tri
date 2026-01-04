@@ -7,7 +7,7 @@ import arc.struct.Seq;
 import arc.struct.Sort;
 import arc.util.Log;
 import arc.util.Structs;
-import me.mars.triangles.MutateMap;
+import me.mars.triangles.generation.MutateMap;
 
 import java.util.Comparator;
 

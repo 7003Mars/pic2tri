@@ -7,7 +7,7 @@ import arc.struct.Seq;
 import arc.util.ArcRuntimeException;
 import arc.util.OS;
 import arc.util.Threads;
-import me.mars.triangles.Generator;
+import me.mars.triangles.generation.Generator;
 import me.mars.triangles.layout.Layout;
 import me.mars.triangles.shapes.Shape;
 

@@ -6,7 +6,7 @@ import arc.graphics.Pixmap;
 import arc.struct.Seq;
 import arc.util.Log;
 import arc.util.Strings;
-import me.mars.triangles.Generator;
+import me.mars.triangles.generation.Generator;
 import me.mars.triangles.layout.Layout;
 import me.mars.triangles.layout.TiledGifLayout;
 import me.mars.triangles.shapes.Shape;

@@ -3,8 +3,8 @@ package me.mars.triangles.shapes;
 import arc.math.Mathf;
 import arc.math.Rand;
 import arc.util.Strings;
-import me.mars.triangles.Generator;
-import me.mars.triangles.MutateMap;
+import me.mars.triangles.generation.Generator;
+import me.mars.triangles.generation.MutateMap;
 
 
 public class Rectangle extends Shape{

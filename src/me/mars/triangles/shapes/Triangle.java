@@ -7,8 +7,8 @@ import arc.math.geom.Vec2;
 import arc.util.Log;
 import arc.util.Strings;
 import arc.util.Structs;
-import me.mars.triangles.Generator;
-import me.mars.triangles.MutateMap;
+import me.mars.triangles.generation.Generator;
+import me.mars.triangles.generation.MutateMap;
 
 
 public class Triangle extends Shape{

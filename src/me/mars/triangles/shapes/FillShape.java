@@ -2,8 +2,8 @@ package me.mars.triangles.shapes;
 
 import arc.math.Rand;
 import arc.util.Strings;
-import me.mars.triangles.MutateMap;
-import me.mars.triangles.Generator;
+import me.mars.triangles.generation.MutateMap;
+import me.mars.triangles.generation.Generator;
 
 public class FillShape extends Shape{
     public int x, y, w, h;

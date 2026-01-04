@@ -1,4 +1,4 @@
-package me.mars.triangles;
+package me.mars.triangles.generation;
 
 import arc.func.Prov;
 import arc.graphics.Color;
@@ -10,6 +10,7 @@ import arc.struct.Seq;
 import arc.struct.Sort;
 import arc.util.Log;
 import arc.util.pooling.Pool;
+import me.mars.triangles.PicToTri;
 import me.mars.triangles.shapes.ScanLine;
 
 public class MutateMap extends Pixmap {

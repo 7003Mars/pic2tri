@@ -1,8 +1,8 @@
 package me.mars.triangles.shapes;
 
 import arc.math.Rand;
-import me.mars.triangles.MutateMap;
-import me.mars.triangles.Generator;
+import me.mars.triangles.generation.MutateMap;
+import me.mars.triangles.generation.Generator;
 
 public abstract class Shape {
 	public short r, g, b, a;

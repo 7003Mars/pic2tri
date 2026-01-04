@@ -4,7 +4,7 @@ import arc.files.Fi;
 import arc.func.Prov;
 import arc.graphics.Pixmap;
 import arc.struct.Seq;
-import me.mars.triangles.Generator;
+import me.mars.triangles.generation.Generator;
 import me.mars.triangles.layout.Layout;
 import me.mars.triangles.layout.LogicDisplayLayout;
 import me.mars.triangles.layout.TiledDisplayLayout;
