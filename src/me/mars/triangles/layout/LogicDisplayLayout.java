@@ -1,5 +1,6 @@
 package me.mars.triangles.layout;
 
+import arc.Core;
 import arc.math.Mathf;
 import arc.math.geom.Geometry;
 import arc.math.geom.Point2;
@@ -9,6 +10,8 @@ import arc.struct.IntSeq;
 import arc.struct.Seq;
 import arc.struct.StringMap;
 import arc.util.Log;
+import me.mars.triangles.PicToTri;
+import me.mars.triangles.schematics.SchematicHandler;
 import me.mars.triangles.shapes.Shape;
 import mindustry.Vars;
 import mindustry.content.Blocks;
@@ -72,7 +75,7 @@ public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
     public LogicDisplayLayout(LogicDisplay displayBlock, int imageWidth, int imageHeight) {
         super(displayBlock, imageWidth, imageHeight);
         this.xChunks = Mathf.ceil((float) imageWidth/displayBlock.displaySize);
-        this.yChunks = Mathf.ceil((float) imageHeight/displayBlock.displaySize); // TODO we need to shift calculation of chunk sizes to here
+        this.yChunks = Mathf.ceil((float) imageHeight/displayBlock.displaySize);
         // TODO Can offset bounds to center image
         // (imageWidth/displayDensity)/block.size => imageWidth/(block.dispSize/disp.size)/block.size
         this.imageBounds = new Rect(procRange, procRange, ((float) imageWidth /displayBlock.displaySize)*displayBlock.size, ((float) imageHeight /displayBlock.displaySize)*displayBlock.size);
@@ -188,7 +191,9 @@ public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
                 schem.tiles.add(procBuilder.getStile());
             }
         }
-        // TODO Add linker block
+        if (Core.settings.getBool(PicToTri.setting("add-metadata"))) {
+            schem.tiles.add(SchematicHandler.anchorBlock.generateStile(procRange, procRange, this.display, this.chunks.map(chunk -> new Point2(chunk.chunkX-procRange, chunk.chunkY-procRange))));
+        }
         return schem;
     }
 
