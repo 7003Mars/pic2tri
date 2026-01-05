@@ -129,13 +129,6 @@ public class Generator {
 			if (PicToTri.debugMode && this.generation.get() % 250 == 0) Log.info("@:@ Acc: @",
 					this, this.generation.get(), newRaw);
 			this.curRaw = newRaw;
-            // TMP
-            Triangle tri = (Triangle) shape;
-//            if (tri.x3 == 190 && tri.y3 == 194) {
-//                Log.info("my max is @", maxOut);
-//                Log.info("Weird @ (@,@) and (@, @)", tri, original.width, original.height, mutated.width, mutated.height);
-//            }
-            // ENDTMP
 			history.add(shape);
 			synchronized (this) {
 				this.timings.add(Time.time);
