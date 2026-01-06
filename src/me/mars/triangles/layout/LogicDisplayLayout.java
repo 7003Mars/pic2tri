@@ -20,6 +20,8 @@ import mindustry.logic.LExecutor;
 import mindustry.world.blocks.logic.LogicBlock;
 import mindustry.world.blocks.logic.LogicDisplay;
 
+import static me.mars.triangles.layout.CodeGenUtil.drawDelay;
+
 public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
     // region Mlog code
     public static int procRange = (int) (((LogicBlock)Blocks.microProcessor).range/ Vars.tilesize);
@@ -55,10 +57,6 @@ public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
 			set t @tick
 			jump $ equal t @tick
 			""".split("\n");
-    public static final String[] drawDelay = """
-            op add j j 1
-            jump $-1 lessThan j @
-            """.split("\n");
     // The maximum shapes possible are when there are 0 repeats at all.
     private static int maxShapesForProc(int procIndex) {
         int maxFreeInstructions = LExecutor.maxInstructions - multiStart.length - drawDelay.length;
@@ -260,22 +258,11 @@ public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
                 }
             }
         }
-        // Make the ending draws also take up 128 ticks.
-        for (int i = 0; i < shapeCounter.size; i++) {
-            if (shapeCounter.get(i) % 128 == 0) continue; // Perfectly aligned, no need for this delayed flush.
-            CodeBuilder builder = code.get(i);
-            int remaining = 128-(shapeCounter.get(i) % 128) - 1 /*Just entering the loop already takes 2 instructions*/;
-            for (String line : drawDelay) {
-                builder.appendLine(line.replace("@", String.valueOf(remaining)));
-            }
-            builder.appendLine("drawflush display1");
-        }
-
-        for (int i = 0; i < processors; i++) {
-            int procMaxShapes = MAX_SHAPES_PER_PROC - i*(repeat.length/2);
-            Log.info("Proc @, @/@", i, shapeCounter.get(i), procMaxShapes);
-        }
-
+        CodeGenUtil.padLastFlush(shapeCounter, code, "drawflush display1");
+//        for (int i = 0; i < processors; i++) {
+//            int procMaxShapes = MAX_SHAPES_PER_PROC - i*(repeat.length/2);
+//            Log.info("Proc @, @/@", i, shapeCounter.get(i), procMaxShapes);
+//        }
         return code;
     }
 

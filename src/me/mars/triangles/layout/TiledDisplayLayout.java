@@ -5,46 +5,56 @@ import arc.math.geom.Geometry;
 import arc.math.geom.Point2;
 import arc.math.geom.Rect;
 import arc.struct.*;
-import arc.util.Log;
 import arc.util.Tmp;
+import kotlin.Pair;
 import me.mars.triangles.shapes.Shape;
 import mindustry.content.Blocks;
 import mindustry.game.Schematic;
 import static arc.util.Tmp.v1;
 import static arc.util.Tmp.v2;
+import static me.mars.triangles.layout.CodeGenUtil.drawDelay;
 import static me.mars.triangles.layout.LogicDisplayLayout.*;
 
 import mindustry.logic.LExecutor;
-import mindustry.world.Tile;
 import mindustry.world.blocks.logic.LogicBlock;
 import mindustry.world.blocks.logic.TileableLogicDisplay;
 
 import java.util.Comparator;
 
 public class TiledDisplayLayout extends Layout<TiledDisplayLayout.ChunkData> {
+    public static int DRAW_TRANSLATE_OFFSET = CodeBuilder.MAX_SAFE_COORDINATE/2;
+
+
     // Controller
     public static final String[] controllerStart = """
-            set c @this
-            set d display1
+            set controller @this
+            set display display1
             sensor op display1 @operations
-            jump 7 equal op 0
-            sensor e switch1 @enabled
-            jump 7 equal e 1
+            jump start equal op 0
+            sensor enabled switch1 @enabled
+            jump start equal enabled 1
             end
+            start:
             control enabled switch1 0 0 0 0
+            draw reset 0 0 0 0 0 0
+            draw translate _ _ 0 0 0 0
+            drawflush display1
             wait 1e-4
-            """.split("\n");
+            """.replace("_", String.valueOf(DRAW_TRANSLATE_OFFSET)).split("\n");
+    /** The longest possible time required for an executor to complete one whole cycle(assuming no jumps)*/
+    public static final float executorCycleTime = (float) LExecutor.maxInstructions /((LogicBlock) Blocks.microProcessor).instructionsPerTick/60f;
     public static final String[] controllerEnd = """
             set i null
-            wait 2
-            """.split("\n"); // TODO Determine this from the longest possible time to run 1k instructions
+            wait _
+            """.replace("_", String.valueOf(Math.ceil(executorCycleTime))).split("\n");
     // Workers
     public static final String[] workerStart = """
-            read c processor1 "c"
-            read d c "d"
-            jump 0 equal d null
-            read i c "i"
-            jump $-1 notEqual i @
+            read controller processor1 "controller"
+            read display controller "display"
+            sensor valid controller @dead
+            jump 0 equal valid 1
+            read i controller "i"
+            jump $-1 notEqual i _
             wait 1e-4
             set j 0
             """.split("\n");
@@ -55,13 +65,12 @@ public class TiledDisplayLayout extends Layout<TiledDisplayLayout.ChunkData> {
         WORKER_MAX_SHAPES = freeInstructions/2;
     }
 
-
-
-
     private static Point2 p1 = new Point2(), p2 = new Point2(), p3 = new Point2(), p4 = new Point2();
 
-    // Maps each processor position to its corresponding link(Either a display directly or a proc containing the display)
-    public Seq<Point2> procs = new Seq<>();
+    // Positions of all worker processors
+    public Seq<Point2> workerPos = new Seq<>();
+    private static int controllerTilesCount = 2;
+    Point2 switchPos, controllerPos;
 
     public TiledDisplayLayout(TileableLogicDisplay tiledDisplay, int imageWidth, int imageHeight, int chunkSize) {
         super(tiledDisplay, imageWidth, imageHeight);
@@ -99,49 +108,22 @@ public class TiledDisplayLayout extends Layout<TiledDisplayLayout.ChunkData> {
                 this.chunks.get((this.yChunks-1)*this.xChunks + x).height += sizeY;
             }
         }
+        this.requestProcs(1);
     }
 
-    // REGION UI METHODS
 
-    @Override
-    public ImageChunk<TiledDisplayLayout.ChunkData> getChunk(int x, int y) {
-        // TODO Inefficient impl
-        for (ImageChunk<ChunkData> chunk : this.chunks) {
-            if (x >= chunk.chunkX && x < chunk.chunkX + chunk.width && y >= chunk.chunkY && y < chunk.chunkY + chunk.height) return chunk;
-        }
-        return null;
-    }
-
-    public int requestProcs(int target) {
-        if (target == this.procs.size) return target;
-        if (this.procs.size > target) {
-            while (this.procs.size > target) {
-                Point2 point = this.procs.pop();
-                this.preview.tiles.remove(t -> t.x == point.x && t.y == point.y);
-            }
-            this.redistributeProcs();
-            return target;
-        }
-        // TODO Dupe code, could prob refactor this logic into another class
-        this.procs.clear();
-        this.preview.tiles.clear();
-        // Spiral generator skips the very first point so we add it manually
-//        this.procs.add(new Pair<>(new Point2(procRange, procRange-1), new Point2(procRange, procRange))); // TODO Somehow the generator does not skip the first point???? idk
+    protected Seq<Point2> generateSpiral(int count) {
+        Seq<Point2> points = new Seq<>();
         int dir = 0;
         int x = procRange, y = procRange-1;
         // Max length of current segment, for both width and height
         int maxX = this.displayWidth/* Width of displays */, maxY = this.displayHeight + 1/* Height of displays + 1 */;
         int len = 0;
-        int count = 0;
-        while (this.procs.size < target && this.procs.size < MAX_PROCS) {
-            if (count >= 2) { // Skip first 2 blocks.
-                procs.add(new Point2(x, y));
-                this.preview.tiles.add(new Schematic.Stile(Blocks.microProcessor, x, y, null, (byte) 0));
-            }
+        while (points.size < count) {
+            points.add(new Point2(x, y));
             x += Geometry.d4x(dir);
             y += Geometry.d4y(dir);
             len += 1;
-            count++;
             if (dir == 0 || dir == 2) {
                 if (len >= maxX) {
                     len = 0;
@@ -155,17 +137,67 @@ public class TiledDisplayLayout extends Layout<TiledDisplayLayout.ChunkData> {
                     dir = (dir + 1) % 4;
                 }
             }
+        }
+        return points;
+    }
 
+    // region Ui methods
+
+    @Override
+    public ImageChunk<TiledDisplayLayout.ChunkData> getChunk(int x, int y) {
+        // Thanks, gemini!
+        int translatedX = x - procRange;
+        int translatedY = y - procRange;
+        int chunkX = translatedX / this.display.size;
+        int chunkY = translatedY / this.display.size;
+        // If the coordinate is beyond the last standard boundary but still
+        // within the total bounds, force it into the last chunk index.
+        if (chunkX >= this.xChunks && translatedX < this.displayWidth) {
+            chunkX = this.xChunks - 1;
+        }
+        if (chunkY >= this.yChunks && translatedY < this.displayHeight) {
+            chunkY = this.yChunks - 1;
+        }
+
+        if (chunkX < 0 || chunkX >= this.xChunks || chunkY < 0 || chunkY >= this.yChunks) {
+            return null;
+        }
+        return this.chunks.get(chunkY * this.xChunks + chunkX);
+    }
+
+    public int requestProcs(int target) {
+        if (target == this.workerPos.size) return target;
+        if (this.workerPos.size > target) {
+            while (this.workerPos.size > target) {
+                Point2 point = this.workerPos.pop();
+                this.preview.tiles.remove(t -> t.x == point.x && t.y == point.y);
+            }
+            this.redistributeProcs();
+            return target;
+        }
+        // TODO Dupe code, could prob refactor this logic into another class
+        this.preview.tiles.clear();
+        this.workerPos.clear();
+        // First 2 blocks are the switch and controller.
+        Seq<Point2> points = generateSpiral(target + controllerTilesCount);
+        switchPos = points.get(0);
+        preview.tiles.add(new Schematic.Stile(Blocks.switchBlock, switchPos.x, switchPos.y, null, (byte) 0));
+        controllerPos = points.get(1);
+        preview.tiles.add(new Schematic.Stile(Blocks.microProcessor, controllerPos.x, controllerPos.y, null, (byte) 0));
+        for (int i = 2; i < points.size; i++) {
+            Point2 pos = points.get(i);
+            this.workerPos.add(pos);
+            this.preview.tiles.add(new Schematic.Stile(Blocks.microProcessor, pos.x, pos.y, null, (byte) 0));
         }
         this.redistributeProcs();
-        return this.procs.size;
+        return this.workerPos.size;
     }
 
     public static int totalShapes(int procs) {
         return WORKER_MAX_SHAPES * procs;
     }
 
-    // ENDREGION
+    // endregion
 
     public static int procsRequired(int shapes) {
         int procs = Mathf.ceilPositive((float) shapes /WORKER_MAX_SHAPES);
@@ -196,15 +228,23 @@ public class TiledDisplayLayout extends Layout<TiledDisplayLayout.ChunkData> {
         v1.nor();
         v2.set(point.x - s1.x, point.y - s1.y);
         v1.scl(Mathf.clamp(v1.dot(v2), 0f, originalLen));
-        // TODO Should this be rounded or truncated??
         return new Point2(Mathf.round(v1.x+s1.x) , Mathf.round(v1.y+s1.y));
     }
 
     void redistributeProcs() {
         int displayArea = this.displayWidth * this.displayHeight;
+        int totalProcs = this.workerPos.size, assignedProcs = 0;
+        Seq<Pair<ImageChunk<ChunkData>, Float>> exactProcs = new Seq<>();
         for (ImageChunk<ChunkData> chunk : this.chunks) {
-            // TODO IMPT This code does not evenly distribute the procs, as we round down and there might be remainders
-            chunk.data.procs = (int) ((float) chunk.width*chunk.height/displayArea * this.procs.size);
+            float exact = ((float) chunk.width*chunk.height/displayArea * totalProcs);
+            int truncated = Mathf.floorPositive(exact);
+            chunk.data.procs = truncated;
+            assignedProcs += truncated;
+            exactProcs.add(new Pair<>(chunk, -(exact-truncated))); // We want to sort by descending later
+        }
+        exactProcs.sortComparing(Pair::component2);
+        for (int i = 0; i < totalProcs-assignedProcs; i++) {
+            exactProcs.get(i).component1().data.procs++;
         }
     }
 
@@ -217,60 +257,34 @@ public class TiledDisplayLayout extends Layout<TiledDisplayLayout.ChunkData> {
                 schem.tiles.add(new Schematic.Stile(this.display, x, y, null, (byte) 0));
             }
         }
+        // Add switch & controller
+        schem.tiles.add(new Schematic.Stile(Blocks.switchBlock, switchPos.x, switchPos.y, null, (byte) 0));
+        int controllerX  = controllerPos.x, controllerY = controllerPos.y;
+        ProcessorBuilder controllerBuilder = new ProcessorBuilder(controllerX, controllerY, generateControllerCode(shapes));
+        controllerBuilder.addAbsoluteLink(switchPos.x, switchPos.y, "switch1");
+        controllerBuilder.addAbsoluteLink(switchPos.x, switchPos.y+1, "display1");
+        schem.tiles.add(controllerBuilder.getStile());
         // Calculate the number of processors needed.
-        int procsRequired = procsRequired(shapes.sum(seq -> seq.size));
-        assert procsRequired <= this.procs.size;
-        // Place the switch
-        schem.tiles.add(new Schematic.Stile(Blocks.switchBlock, procRange, procRange-1, null, (byte) 0));
-        // Place the controller
-        int controllerX = procRange+1, controllerY = procRange-1;
-        LogicBlock.LogicBuild controller = (LogicBlock.LogicBuild) Blocks.microProcessor.newBuilding();
-        controller.tile = new Tile(controllerX, controllerY);
-        CodeBuilder controllerCode = new CodeBuilder();
-        controllerCode.extendLines(controllerStart);
-        for (int i = -procsRequired; i < 0; i++) {
-            controllerCode.appendLine("set i " + i);
-            controllerCode.appendLine("wait 1e-4");
-        }
-        controllerCode.extendLines(controllerEnd);
-        controller.updateCode(controllerCode.toString());
-        controller.links.add(new LogicBlock.LogicLink(controllerX-1, controllerY, "switch1" ,true));
-        controller.links.add(new LogicBlock.LogicLink(controllerX, controllerY+1, "display1", true));
-        schem.tiles.add(new Schematic.Stile(Blocks.microProcessor, controllerX, controllerY, controller.config(), (byte) 0));
-        // Image processors
-        // Translate chunks then flatten results
-        Seq<Shape> allShapes = new Seq<>();
-        for (int i = 0; i < this.chunks.size; i++) {
-            ImageChunk<ChunkData> chunk = this.chunks.get(i);
-            int ix = (int) ((chunk.chunkX-procRange) * (this.imageWidth/this.imageBounds.width));
-            int iy = (int) ((chunk.chunkY-procRange) * (this.imageHeight/this.imageBounds.height));
-            shapes.get(i).each(shape -> shape.translate(ix, iy));
-            allShapes.add(shapes.get(i));
-        }
-        Seq<CodeBuilder> code = generateProcessorCode(procsRequired, allShapes);
-        for (int i = 0; i < procsRequired; i++) {
-            Point2 proc = this.procs.get(i);
+        Seq<String> workerCode = generateWorkerCode(shapes);
+        for (int i = 0; i < workerCode.size; i++) {
+            Point2 proc = this.workerPos.get(i);
             Point2 closestProc = closestProc(proc.x, proc.y);
-            LogicBlock.LogicLink controllerLink;
+            ProcessorBuilder procBuilder = new ProcessorBuilder(proc.x, proc.y, workerCode.get(i));
             // Innermost ring, we sequentially link each proc to the controller
             // Also consider the edge case where the closest processor is actually the switch block. If it is, we fallback to linking to the last linked processor
             if (proc.dst2(closestProc) == 0 || (closestProc.x == procRange && closestProc.y == procRange-1 && proc.dst2(closestProc) <= procRange*procRange)) {
-                controllerLink = new LogicBlock.LogicLink(controllerX, controllerY, "processor1", true);
+                procBuilder.addAbsoluteLink(controllerX, controllerY, "processor1");
             } else {
                 // Outer rings, we just link as far as possible into the inner rings
                 v1.set(closestProc.x, closestProc.y);
                 v1.sub(proc.x, proc.y);
                 v1.limit(procRange);
                 // We want to round towards the origin(relative to the processor) to ensure the point is within range
-                v1.x = (int) v1.x;
-                v1.y = (int) v1.y;
-                controllerLink = new LogicBlock.LogicLink((int) (proc.x + v1.x), (int) (proc.y + v1.y), "processor1", true);
+//                v1.x = (int) v1.x;
+//                v1.y = (int) v1.y;
+                procBuilder.addRelativeLink((int) v1.x, (int) v1.y, "processor1");
             }
-            LogicBlock.LogicBuild lbuild = (LogicBlock.LogicBuild) Blocks.microProcessor.newBuilding();
-            lbuild.tile = new Tile(proc.x, proc.y);
-            lbuild.links.add(controllerLink);
-            lbuild.updateCode(code.get(i).toString()); // TODO Actual code bs here
-            schem.tiles.add(new Schematic.Stile(Blocks.microProcessor, proc.x, proc.y, lbuild.config(), (byte) 0));
+            schem.tiles.add(procBuilder.getStile());
             controllerX = proc.x;
             controllerY = proc.y;
 
@@ -278,26 +292,55 @@ public class TiledDisplayLayout extends Layout<TiledDisplayLayout.ChunkData> {
         return schem;
     }
 
-    // TODO REFACTOR THIS, ITS ALMOST IDENTICAL CODE
-    public static Seq<CodeBuilder> generateProcessorCode(int processors, Seq<Shape> shapes) {
+    protected String generateControllerCode(Seq<Seq<Shape>> shapes) {
+        int procsRequired = procsRequired(shapes.sum(seq -> seq.size));
+        CodeBuilder controllerCode = new CodeBuilder();
+        controllerCode.extendLines(controllerStart);
+        for (int i = -procsRequired; i < 0; i++) {
+            controllerCode.appendLine("set i " + i);
+            controllerCode.appendLine("wait 1e-4");
+        }
+        controllerCode.extendLines(controllerEnd);
+        return controllerCode.toString();
+    }
+
+    protected Seq<String> generateWorkerCode(Seq<Seq<Shape>> shapes) {
+        Seq<String> res = new Seq<>();
+        int procsRequired = procsRequired(shapes.sum(seq -> seq.size));
+        assert procsRequired <= this.workerPos.size;
+        res.add(generateInitWorkerCode(procsRequired, translateAndFlattenChunks(shapes)));
+        return res;
+    }
+
+    protected Seq<Shape> translateAndFlattenChunks(Seq<Seq<Shape>> shapes) {
+        // Translate chunks then flatten results
+        Seq<Shape> allShapes = new Seq<>();
+        for (int i = 0; i < this.chunks.size; i++) {
+            ImageChunk<ChunkData> chunk = this.chunks.get(i);
+            int ix = (int) ((chunk.chunkX-procRange) * (this.imageWidth/this.imageBounds.width));
+            int iy = (int) ((chunk.chunkY-procRange) * (this.imageHeight/this.imageBounds.height));
+            shapes.get(i).each(shape -> shape.translate(ix - DRAW_TRANSLATE_OFFSET, iy - DRAW_TRANSLATE_OFFSET));
+            allShapes.add(shapes.get(i));
+        }
+        return allShapes;
+    }
+
+    // TODO REFACTOR THIS, ITS QUITE SIMILAR CODE
+    public static Seq<String> generateInitWorkerCode(int processors, Seq<Shape> shapes) {
         IntSeq shapeCounter = new IntSeq(processors);
         Seq<CodeBuilder> code = new Seq<>();
         for (int i = 0; i < processors; i++) {
             CodeBuilder builder = new CodeBuilder();
             // Append init code to each processor
             for (String line : workerStart) {
-                builder.appendLine(line.replace("@", String.valueOf(i-processors)));
+                builder.appendLine(line.replace("_", String.valueOf(i-processors)));
             }
             code.add(builder);
             shapeCounter.add(0);
         }
 
         int procIndex = 0;
-        // TMP TODO Removeme
-        int tmp = -1;
-        // ENDTMP
         for (Shape shape : shapes) {
-            tmp += 1;
             CodeBuilder builder = code.get(procIndex);
             builder.appendShape(shape);
             shapeCounter.incr(procIndex, 1);
@@ -305,27 +348,17 @@ public class TiledDisplayLayout extends Layout<TiledDisplayLayout.ChunkData> {
             boolean advance = count % 128 == 0 || count >= WORKER_MAX_SHAPES;
             if (advance) {
                 if (count % 128 == 0) {
-                    builder.appendLine("drawflush d");
+                    builder.appendLine("drawflush display");
                 }
                 procIndex = (procIndex+1)%processors;
             }
         }
-        // Make the ending draws also take up 128 ticks.
-        for (int i = 0; i < shapeCounter.size; i++) {
-            if (shapeCounter.get(i) % 128 == 0) continue; // Perfectly aligned, no need for this delayed flush.
-            CodeBuilder builder = code.get(i);
-            int remaining = 128-(shapeCounter.get(i) % 128) - 1 /*Just entering the loop already takes 2 instructions*/;
-            for (String line : drawDelay) {
-                builder.appendLine(line.replace("@", String.valueOf(remaining)));
-            }
-            builder.appendLine("drawflush d");
-        }
+        CodeGenUtil.padLastFlush(shapeCounter, code, "drawflush display");
+//        for (int i = 0; i < processors; i++) {
+//            Log.info("Proc @, @/@", i, shapeCounter.get(i), WORKER_MAX_SHAPES);
+//        }
 
-        for (int i = 0; i < processors; i++) {
-            Log.info("Proc @, @/@", i, shapeCounter.get(i), WORKER_MAX_SHAPES);
-        }
-
-        return code;
+        return code.map(CodeBuilder::toString);
     }
 
     public static class ChunkData {
