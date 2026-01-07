@@ -53,7 +53,4 @@ public abstract class Layout<T> {
         }
     }
 
-    public float displayDensity(LogicDisplay display) {
-        return (float) display.displaySize /display.size;
-    }
 }

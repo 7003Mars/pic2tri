@@ -10,7 +10,6 @@ import arc.util.Structs;
 import me.mars.triangles.PicToTri;
 import mindustry.Vars;
 import mindustry.content.Blocks;
-import mindustry.ctype.Content;
 import mindustry.entities.units.BuildPlan;
 import mindustry.game.Schematic.Stile;
 import mindustry.graphics.Drawf;
@@ -44,10 +43,9 @@ public class ImageAnchorBlock extends Block {
 		Object config = plan.config;
 		if (config instanceof Object[] objArray && objArray.length == 3 &&
 				objArray[0] instanceof Integer ver && ver == 1 &&
-				objArray[1] instanceof Content content &&
+				objArray[1] instanceof LogicDisplay display &&
 				objArray[2] instanceof Point2[] rawPoints) {
 			Seq<Point2> points = new Seq<>(rawPoints).map(p -> p.cpy().add(plan.x, plan.y));
-			LogicDisplay display = (LogicDisplay) content;
 			LinkAssistBlock linkBlock = getSuitableBlock(points, display);
 			if (Core.settings.getBool(setting("link-assist"))) {
 				Core.app.post(() -> Vars.control.input.useSchematic(linkBlock.generateSchematic(points, display)));

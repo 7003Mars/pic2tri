@@ -117,7 +117,7 @@ public class ImageConverter extends Converter {
                 Generator gen = this.generators.get(i);
                 GeneratorProgress prog = this.genProg.get(i);
                 prog.genState = gen.getState();
-                prog.progress = (float) gen.cur() /gen.maxGen;
+                prog.progress = (float) gen.cur()/gen.getMaxGen();
             }
             return this.genProg;
         }

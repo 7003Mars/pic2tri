@@ -56,7 +56,7 @@ public abstract class Converter {
         public CompletableFuture<Seq<Seq<Shape>>> results;
         public Seq<Generator> generators;
 
-        public ConverterTask(me.mars.triangles.converter.Converter converter, CompletableFuture<Seq<Seq<Shape>>> results, Seq<Generator> generators) {
+        public ConverterTask(Converter converter, CompletableFuture<Seq<Seq<Shape>>> results, Seq<Generator> generators) {
             this.converter = converter;
             this.results = results;
             this.generators = generators;
