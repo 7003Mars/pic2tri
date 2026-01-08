@@ -32,7 +32,6 @@ public class TiledGifLayout extends TiledDisplayLayout {
                 sensor enabled switch @enabled
                 jump 0 equal enabled 1
                 begin:
-                control enabled switch 1 0 0 0
                 write 1 controller "reset"
                 read reset controller "reset"
                 jump $-1 equal reset 1
@@ -53,6 +52,7 @@ public class TiledGifLayout extends TiledDisplayLayout {
                 set display display1
                 jump 0 equal display null
                 set reset 0
+                control enabled switch 1 0 0 0
                 draw reset 0 0 0 0 0 0
                 draw translate _ _ 0 0 0 0
                 drawflush display
