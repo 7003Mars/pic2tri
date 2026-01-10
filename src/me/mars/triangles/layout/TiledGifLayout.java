@@ -75,11 +75,16 @@ public class TiledGifLayout extends TiledDisplayLayout {
         code.appendLine("wait 0");
         code.appendLine("inc:");
         // Actual loop begins here
-        code.appendLine("op add i i 1");
-        for (int i = 0; i < frameInterval-1; i++) {
-            code.appendLine("wait 1e-4");
+        code.appendLine("op add i i " + frameInterval);
+        if (frameInterval != 1) {
+            // When the frame interval isn't 1, we use wait instructions to control timing as they will increment the accumulator anyway.
+            // If the frame interval is 1, including the wait (loop, increment and wait) will be too many instructions for 2ipt and we probably won't achieve 60 fps.
+            // This has an unintended side effect of 60 fps actually being 60 or more if ODs are used.
+            for (int i = 0; i < frameInterval; i++) {
+                code.appendLine("wait 1e-10");
+            }
         }
-        code.appendLine("jump inc lessThan i " + frames);
+        code.appendLine("jump inc lessThan i " + frames*frameInterval);
         // REMOVEME
         code.appendLine("draw clear 255 255 255 0 0 0");
         code.appendLine("drawflush display");
