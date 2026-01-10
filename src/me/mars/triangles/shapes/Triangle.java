@@ -14,6 +14,8 @@ import me.mars.triangles.generation.MutateMap;
 public class Triangle extends Shape{
 
 	public int x1, y1, x2, y2, x3, y3;
+	// Cache the point array that's used for sorting
+	private Point2[] p = new Point2[3];
 
 	public Triangle() {
 	}
@@ -101,7 +103,9 @@ public class Triangle extends Shape{
 		Point2 p1 = pixmap.pointPool.obtain().set(this.x1, this.y1);
 		Point2 p2 = pixmap.pointPool.obtain().set(this.x2, this.y2);
 		Point2 p3 = pixmap.pointPool.obtain().set(this.x3, this.y3);
-		Point2[] p = {p1, p2, p3};
+		p[0] = p1;
+		p[1] = p2;
+		p[2] = p3;
 		pixmap.sort.sort(p, Structs.comparingInt(point2 -> point2.y));
 		if (p[0].y == p[1].y) {
 			// point[2] is the highest
