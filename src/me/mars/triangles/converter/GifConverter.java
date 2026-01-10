@@ -25,7 +25,9 @@ public class GifConverter extends Converter {
         super(layout, filePath);
         validateLayout(layout, filePath);
         Fi dir = filePath.parent();
-        this.files = dir.findAll(f -> f.extension().equals(filePath.extension()));
+        String ext = "." + filePath.extension();
+        this.files = Seq.with(dir.list(f -> f.getName().endsWith(ext)));
+        files.sortComparing(Fi::nameWithoutExtension);
     }
 
     public static void validateLayout(Layout<?> layout, Fi path) {
@@ -34,7 +36,12 @@ public class GifConverter extends Converter {
         }
         ImageSize originalSize = ImageSize.getSize(path);
         Fi dir = path.parent();
-        Seq<Fi> files = dir.findAll(f -> f.extension().equals(path.extension()));
+        String ext = "." + path.extension();
+        Seq<Fi> files = Seq.with(dir.list(f -> f.getName().endsWith(ext)));
+        int minFrames = ((TiledGifLayout)layout).minFrameCount();
+        if (files.size < minFrames) {
+            throw new UnsupportedLayoutException(Strings.format("At least @ frames are required for this frame interval", minFrames));
+        }
         for (Fi file : files) {
             ImageSize imageSize = ImageSize.getSize(file);
             if (imageSize.width != originalSize.width || imageSize.height != originalSize.height) {
