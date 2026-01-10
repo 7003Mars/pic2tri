@@ -47,10 +47,10 @@ public class TiledGifLayout extends TiledDisplayLayout {
     // Controller
     public static String getController(int initProcs, int frames, int frameInterval) {
         String[] controllerStart = """
-                set controller @this
                 set switch switch1
                 set display display1
-                jump 0 equal display null
+                jump 0 equal display1 null
+                set controller @this
                 set reset 0
                 control enabled switch 1 0 0 0
                 draw reset 0 0 0 0 0 0
