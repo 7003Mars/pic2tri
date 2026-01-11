@@ -6,18 +6,14 @@ plugins {
     java
     kotlin("jvm") version "2.2.10"
     id("com.gradleup.shadow") version "9.0.2"
+    id("xyz.wagyourtail.jvmdowngrader") version "1.3.5"
 }
 
 version = "1.0"
 
 java {
-    targetCompatibility = JavaVersion.VERSION_1_8
-    sourceCompatibility = JavaVersion.VERSION_16
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_1_8
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(16))
     }
 }
 
@@ -47,17 +43,10 @@ repositories {
     maven("https://maven.xpdustry.com/anuken")
 }
 val mindustryVersion by extra("v154.3")
-val jabelVersion by extra("93fde537c7")
 val sdkRoot: String? by extra(System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT"))
 
 val archivesName: String = base.archivesName.get()
 
-allprojects {
-    tasks.withType<JavaCompile> {
-        sourceCompatibility = "16"
-        options.compilerArgs.addAll(arrayOf("--release", "8"))
-    }
-}
 
 //configurations.all{
 //    resolutionStrategy.eachDependency {
@@ -72,7 +61,6 @@ dependencies {
     compileOnly("com.github.anuken.mindustry:core:$mindustryVersion")
     implementation(kotlin("stdlib"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    annotationProcessor("com.github.Anuken:jabel:$jabelVersion")
 
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     // TODO DELETEME Above
@@ -87,7 +75,7 @@ dependencies {
 }
 
 tasks.register<Exec>("jarAndroid") {
-    dependsOn("shadowJar")
+    dependsOn("shadeDowngradedApi")
     if(sdkRoot == null || !File(sdkRoot!!).exists()) throw GradleException("No valid Android SDK found. Ensure that ANDROID_HOME is set to your Android SDK directory.")
 
     val platformRoot = File("$sdkRoot/platforms/").listFiles()?.also { it.sort(); it.reverse() }?.find { File(it, "android.jar").exists()}
@@ -95,28 +83,18 @@ tasks.register<Exec>("jarAndroid") {
     val d8Path = System.getenv("d8_path") ?: "d8"
     // collect dependencies needed for desugaring
     val dependencies = (
-            configurations.compileClasspath.get().toList() + configurations.runtimeClasspath.get().toList() + listOf(File(platformRoot, "android.jar"))
+            configurations.compileClasspath.get().toList() + configurations.runtimeClasspath.get().toList()
             ).joinToString(" ") { "--classpath ${it.path}" }
+    val libPath = "--lib ${File(platformRoot, "android.jar").path}"
     workingDir(layout.buildDirectory.dir("libs"))
 
-    commandLine("$d8Path $dependencies --min-api 14 --output ${archivesName}Android.jar ${archivesName}Desktop.jar".split(" "))
+    commandLine("$d8Path $libPath $dependencies --min-api 14 --output ${archivesName}Android.jar ${archivesName}Desktop.jar".split(" "))
 }
 
-//tasks.named<Jar>("jar") {
-//    archiveFileName.set("${archivesName}Desktop.jar")
-//    val buildVer: String = project.findProperty("modVer") as String? ?: "build-${LocalTime.now()}"
-//
-////    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it)})
-//    from("assets/") {
-//        include("**")
-//    }
-//    from("mod.hjson") {
-//        filter { if (it.startsWith("version")) "version:$buildVer" else it }
-//    }
-//}
 
-tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
-    archiveFileName.set("${archivesName}Desktop.jar")
+// We don't actually need the verbose way of obtaining the task as they both do the same thing
+tasks.shadowJar {
+
     val buildVer: String = project.findProperty("modVer") as String? ?: "build-${LocalTime.now()}"
 
     from("assets/") {
@@ -130,8 +108,12 @@ tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJ
     enableAutoRelocation = true
 }
 
+tasks.shadeDowngradedApi {
+    archiveFileName.set("${archivesName}Desktop.jar")
+}
+
 tasks.register<Jar>("deploy") {
-    dependsOn("shadowJar", "jarAndroid")
+    dependsOn("shadeDowngradedApi", "jarAndroid")
     archiveFileName.set("$archivesName.jar")
     val name = archivesName
     val buildDir = layout.buildDirectory
