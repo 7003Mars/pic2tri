@@ -21,7 +21,6 @@ public class Generator {
 
 	public final int alpha;
 	private GenState state = GenState.Ready;
-	private WindowedMean timings = new WindowedMean(50);
 
 	public AtomicInteger generation = new AtomicInteger();
 	public volatile int maxGen;
@@ -80,21 +79,16 @@ public class Generator {
 		this.generation.getAndIncrement();
 	}
 
-	public Seq<Shape> start(Pixmap image) {
-		return this.start(image, null);
-	}
-
 	/**
 	 * Disposes the provided pixmaps
 	 * @param image The target image the generator tries to reach
 	 * @param continuation If provided, the generator starts with the continuation as the canvas
 	 * @return The shapes generated
 	 */
-	public Seq<Shape> start(Pixmap image, @Nullable Pixmap continuation) {
+	public GenerationOutput start(Pixmap image, @Nullable Pixmap continuation) {
 		synchronized (this) {
 			if (this.state != GenState.Ready) throw new IllegalStateException("Generator either started or done");
 			this.state = GenState.Started;
-			this.timings.add(Time.time);
 		}
 		this.original = new Pixmap(image.width, image.height);
 		this.original.draw(image);
@@ -130,30 +124,20 @@ public class Generator {
 					this, this.generation.get(), newRaw);
 			this.curRaw = newRaw;
 			history.add(shape);
-			synchronized (this) {
-				this.timings.add(Time.time);
-			}
 		}
 		Log.debug("Generator @ Finished with @/@ shapes", this, history.size, this.maxGen);
-        if (!this.retainPixmap) {
-            this.mutated.dispose();
+		Pixmap drawn = null;
+        if (this.retainPixmap) {
+			drawn = new Pixmap(this.mutated.width, this.mutated.height);
+			drawn.draw(this.mutated);
         }
+		this.mutated.dispose();
 		this.original.dispose();
         synchronized (this) {
             this.state = GenState.Done;
         }
-		return this.history;
+		return new GenerationOutput(this.history, drawn, this.cur(), this.maxGen, this.acc());
 	}
-
-    public Pixmap getResult() {
-        synchronized (this) {
-            if (this.state != GenState.Done) throw new IllegalStateException("Generator not done");
-        }
-        if (this.mutated.isDisposed()) return null;
-        Pixmap copy = this.mutated.copy();
-        this.mutated.dispose();
-        return copy;
-    }
 
 	private Shape getBestShape() {
 		Shape shape = new Triangle();
@@ -214,17 +198,6 @@ public class Generator {
 		return this.generation.get();
 	}
 
-	public synchronized float rate() {
-		if (this.state != GenState.Started) return 0;
-		return this.timings.getCount() / (Time.time - this.timings.oldest());
-	}
-
-	public synchronized float timeToCompletion() {
-		if (this.state != GenState.Started) return -1;
-		int cur = this.generation.get();
-		return (float) (this.maxGen - cur) / this.rate() / Time.toSeconds;
-	}
-
 	public synchronized GenState getState() {
 		return this.state;
 	}
@@ -234,27 +207,63 @@ public class Generator {
 		return 1f - Mathf.sqrt((float) this.curRaw / (this.mutated.width * this.mutated.height * 4))/255f;
 	}
 
+	public record GenerationOutput(Seq<Shape> shapes, @Nullable Pixmap result, int iterations, int maxIterations,
+								   float acc) {
+	}
+
 	public static class GenOpts {
         public int seed;
         public int maxGen;
-        public boolean retainPixmap = false;
-        public float targetAcc = 0.99f;
-        public final int alpha;
+		public final int alpha;
+		public boolean retainPixmap = false;
+		public float targetAcc = 0.99f;
         /** How far a vertex is able to shift when randomised */
         public int maxRange = 20;
         /** By how much can a vertex exceed the bounds of the pixmap*/
         public int maxOut = 16;
 
-		public GenOpts(int alpha, int maxGen) {
-			this.alpha = Mathf.clamp(alpha, 0, 255);
+		public GenOpts(int seed, int alpha, int maxGen) {
+			this.seed = seed;
 			this.maxGen = maxGen;
+			this.alpha = Mathf.clamp(alpha, 0, 255);
 		}
 
-        public GenOpts(int alpha, int maxGen, int maxOut, boolean retainPixmap) {
-            this(alpha, maxGen);
-            this.maxOut = maxOut;
-            this.retainPixmap = retainPixmap;
-        }
+		public GenOpts retainPixmap(boolean retainPixmap) {
+			this.retainPixmap = retainPixmap;
+			return this;
+		}
+
+		public GenOpts targetAcc(float targetAcc) {
+			this.targetAcc = targetAcc;
+			return this;
+		}
+
+		public GenOpts maxRange(int maxRange) {
+			this.maxRange = maxRange;
+			return this;
+		}
+
+		public GenOpts maxOut(int maxOut) {
+			this.maxOut = maxOut;
+			return this;
+		}
+
+		public Generator build() {
+			return new Generator(this);
+		}
+
+		@Override
+		public String toString() {
+			return "GenOpts{" +
+					"seed=" + seed +
+					", maxGen=" + maxGen +
+					", alpha=" + alpha +
+					", retainPixmap=" + retainPixmap +
+					", targetAcc=" + targetAcc +
+					", maxRange=" + maxRange +
+					", maxOut=" + maxOut +
+					'}';
+		}
 	}
 
 	public enum GenState {

@@ -1,7 +1,6 @@
 package me.mars.triangles.converter;
 
 import arc.files.Fi;
-import arc.func.Prov;
 import arc.graphics.Pixmap;
 import arc.struct.Seq;
 import me.mars.triangles.generation.Generator;
@@ -28,7 +27,7 @@ public class ImageConverter extends Converter {
                 totalShapes = TiledDisplayLayout.totalShapes(data.procs);
             }
             if (layout instanceof LogicDisplayLayout) {
-                this.options.add(new Generator.GenOpts(175, totalShapes));
+                this.options.add(new Generator.GenOpts(0/*TODO*/, 175, totalShapes));
             } else {
                 // TODO VERY IMPT
                 /*
@@ -39,7 +38,7 @@ public class ImageConverter extends Converter {
                 As of right now, we just extend maxout to 1.
                 This will likely lead to inaccuracies between what is generated and what is actually rendered, as triangles with flat edges that exceed their chunks can draw into other chunks
                 */
-                this.options.add(new Generator.GenOpts(175, totalShapes, 1, true));
+                this.options.add(new Generator.GenOpts(0/*TODO*/, 175, totalShapes).maxOut(1));
             }
         }
     }
@@ -69,8 +68,7 @@ public class ImageConverter extends Converter {
         resized.draw(flipped, 0, 0, resized.width, resized.height, true);
         origin.dispose();
         flipped.dispose();
-        Seq<CompletableFuture<Seq<Shape>>> futures = new Seq<>();
-        Seq<Generator> generators = new Seq<>();
+        Seq<ImageGenerationService.GenerationTaskResult> taskResults = new Seq<>();
         for (int i = 0; i < this.layout.chunks.size; i++) {
             Layout.ImageChunk<?> chunk = this.layout.chunks.get(i);
             // TODO possible precision loss here, check code again
@@ -82,44 +80,34 @@ public class ImageConverter extends Converter {
             int iy = (int) ((chunk.chunkY-procRange) * (layout.imageHeight/layout.imageBounds.height));
 //            Log.info("Start @, @, w@ h@", ix, iy, iw, ih);
             cropped.draw(resized, ix, iy, iw, ih, 0, 0, iw, ih);
-            Generator gen = new Generator(options.get(i));
-            Prov<Pixmap> pixmapProv = saveTmpPixmap(cropped);
-            futures.add(CompletableFuture.supplyAsync(() -> gen.start(pixmapProv.get()), executor));
-            generators.add(gen);
+            ImageGenerationService.GenerationTaskResult genResult = ImageGenerationService.submitImage(options.get(i), cropped, null, 0, this);
+            taskResults.add(genResult);
         }
         resized.dispose();
         return new ImageConverterTask(
-                this,
-                CompletableFuture.allOf(futures.toArray(CompletableFuture.class)).thenApply(ignored -> futures.map(CompletableFuture::join)),
-                generators
+                this, taskResults
         );
     }
 
     protected static class ImageConverterTask extends ConverterTask {
-        // Technically supposed to return a fresh Seq whenever genProg() is called but we cache one for perf
-        private final Seq<GeneratorProgress> genProg = new Seq<>();
+        public ImageConverterTask(ImageConverter converter, Seq<ImageGenerationService.GenerationTaskResult> taskResults) {
+            super(converter, taskResults);
+        }
 
-        public ImageConverterTask(ImageConverter converter, CompletableFuture<Seq<Seq<Shape>>> results, Seq<Generator> generators) {
-            super(converter, results, generators);
-            for (int i = 0; i < this.generators.size; i++) {
-                genProg.add(new GeneratorProgress());
-            }
+        @Override
+        public CompletableFuture<Seq<Seq<Shape>>> getChunks() {
+            return CompletableFuture.allOf(this.results.map(res -> res.output).toArray(CompletableFuture.class))
+                    .thenApply(ignored -> this.results.map(res -> res.output.join().shapes()));
         }
 
         @Override
         public float progress() {
-            return (float) this.generators.count(gen -> gen.getState() == Generator.GenState.Done) /this.generators.size;
+            return (float) this.results.count(gen -> gen.state() == Generator.GenState.Done) /this.results.size;
         }
 
         @Override
-        public Seq<GeneratorProgress> genProg() {
-            for (int i = 0; i < this.generators.size; i++) {
-                Generator gen = this.generators.get(i);
-                GeneratorProgress prog = this.genProg.get(i);
-                prog.genState = gen.getState();
-                prog.progress = (float) gen.cur()/gen.getMaxGen();
-            }
-            return this.genProg;
+        public Seq<ImageGenerationService.GenerationTaskResult> taskProgView() {
+            return this.results;
         }
     }
 }

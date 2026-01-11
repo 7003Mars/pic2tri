@@ -86,11 +86,10 @@ public class TiledGifLayout extends TiledDisplayLayout {
         }
         code.appendLine("jump inc lessThan i " + frames*frameInterval);
         // REMOVEME
-        code.appendLine("draw clear 255 255 255 0 0 0");
-        code.appendLine("drawflush display");
-        code.appendLine("jump first equal reset false");
+//        code.appendLine("draw clear 255 255 255 0 0 0");
+//        code.appendLine("drawflush display");
         // END
-//        code.appendLine("jump first equal reset false");
+        code.appendLine("jump first equal reset false");
         return code.toString();
     }
     // Worker

@@ -3,6 +3,7 @@ package me.mars.triangles.converter;
 import arc.files.Fi;
 import arc.func.Prov;
 import arc.graphics.Pixmap;
+import arc.struct.Seq;
 import arc.util.ArcRuntimeException;
 import arc.util.Nullable;
 import arc.util.OS;
@@ -17,28 +18,43 @@ import static me.mars.triangles.utils.PriorityExecutor.priorityCallable;
 
 public class ImageGenerationService {
     public static final ExecutorService executor = PriorityExecutor.getExecutor(OS.cores, "Image generator");
+    private static final Seq<ComputedGenerationTaskResult> activeTasks = new Seq<>();
 
-    public static GenerationTaskResult submitImage(Generator.GenOpts opts, Pixmap image, @Nullable Pixmap continuation, int priority) {
+    public static GenerationTaskResult submitImage(Generator.GenOpts opts, Pixmap image, @Nullable Pixmap continuation, int priority, @Nullable Object owner) {
         byte[] imageHash = GeneratorCache.imageHash(image), continuationHash = GeneratorCache.imageHash(continuation);
         GenerationTaskResult cachedResult = GeneratorCache.getCache(opts, imageHash, continuationHash);
         if (cachedResult != null) {
             return cachedResult;
         }
-        Generator generator = new Generator(opts);
+        Generator generator = opts.build();
         Prov<Pixmap> imageProv = saveTmpPixmap(image);
         @Nullable Prov<Pixmap> continuationProv = continuation != null ? saveTmpPixmap(continuation) : null;
         CompletableFuture<Generator.GenerationOutput> future = new CompletableFuture<>();
+        ComputedGenerationTaskResult taskResult = new ComputedGenerationTaskResult(future, generator, owner);
         executor.submit(priorityCallable(priority, () -> {
             try {
+                synchronized (activeTasks) {
+                    activeTasks.add(taskResult);
+                }
                 Generator.GenerationOutput output = generator.start(imageProv.get(), continuationProv != null ? continuationProv.get() : null);
                 GeneratorCache.setCache(opts, imageHash, continuationHash, output);
                 future.complete(output);
             } catch (Throwable t) {
                 future.completeExceptionally(t);
+            } finally {
+                synchronized (activeTasks) {
+                    activeTasks.remove(taskResult, true);
+                }
             }
             return null; // Lazy hack since I don't wanna create a PriorityRunnable too
         }));
-        return new ComputedGenerationTaskResult(future, generator);
+        return taskResult;
+    }
+
+    public static Seq<ComputedGenerationTaskResult> getActiveTasks() {
+        synchronized (activeTasks) {
+            return new Seq<>(activeTasks);
+        }
     }
 
     /**
@@ -75,12 +91,14 @@ public class ImageGenerationService {
         public abstract int maxGen();
     }
 
-    private static class ComputedGenerationTaskResult extends GenerationTaskResult {
-        Generator generator;
+    public static class ComputedGenerationTaskResult extends GenerationTaskResult {
+        private final Generator generator;
+        public @Nullable Object owner;
 
-        public ComputedGenerationTaskResult(CompletableFuture<Generator.GenerationOutput> output, Generator generator) {
+        public ComputedGenerationTaskResult(CompletableFuture<Generator.GenerationOutput> output, Generator generator, @Nullable Object owner) {
             super(output);
             this.generator = generator;
+            this.owner = owner;
         }
 
 
