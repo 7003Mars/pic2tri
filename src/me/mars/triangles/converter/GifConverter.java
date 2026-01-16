@@ -75,7 +75,7 @@ public class GifConverter extends Converter {
                 cropped.dispose();
             }
             synchronized (this) {
-                Log.info("Adding @ chunks", chunks.size);
+                Log.debug("Adding @ chunks", chunks.size);
                 results.add(chunks);
             }
             // TODO This is rather hacky, not sure how to refactor this tho.
