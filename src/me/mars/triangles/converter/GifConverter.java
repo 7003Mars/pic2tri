@@ -1,10 +1,10 @@
 package me.mars.triangles.converter;
 
+import arc.Core;
 import arc.files.Fi;
 import arc.graphics.Pixmap;
 import arc.struct.Seq;
 import arc.util.Log;
-import arc.util.Strings;
 import me.mars.triangles.generation.Generator;
 import me.mars.triangles.layout.Layout;
 import me.mars.triangles.layout.TiledGifLayout;
@@ -13,6 +13,7 @@ import me.mars.triangles.shapes.Shape;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static me.mars.triangles.PicToTri.internalName;
 import static me.mars.triangles.layout.LogicDisplayLayout.procRange;
 
 public class GifConverter extends Converter {
@@ -39,13 +40,13 @@ public class GifConverter extends Converter {
         Seq<Fi> files = Seq.with(dir.list(f -> f.getName().endsWith(ext)));
         int minFrames = ((TiledGifLayout)layout).minFrameCount();
         if (files.size < minFrames) {
-            throw new UnsupportedLayoutException(Strings.format("At least @ frames are required for this frame interval", minFrames));
+            throw new UnsupportedLayoutException(Core.bundle.format(internalName+".converter.gif.errors.min-frame", minFrames));
         }
         for (Fi file : files) {
             ImageSize imageSize = ImageSize.getSize(file);
             if (imageSize.width != originalSize.width || imageSize.height != originalSize.height) {
-                throw new UnsupportedLayoutException(Strings.format("The image @ has size (@, @) but target has size (@, @)",
-                        imageSize.width, imageSize.height, originalSize.width, originalSize.height));
+                throw new UnsupportedLayoutException(Core.bundle.format(internalName+".converter.gif.errors.inconsistent-size",
+                        originalSize.width, originalSize.height, file.absolutePath(), imageSize.width, imageSize.height));
             }
         }
     }

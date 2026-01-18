@@ -52,7 +52,7 @@ public class ImageConverter extends Converter {
             }
         } else if (layout instanceof TiledDisplayLayout tiledDisplayLayout) {
             if (tiledDisplayLayout.chunks.sum(chunk -> chunk.data.procs) >= LogicDisplayLayout.MAX_PROCS) {
-                throw new UnsupportedLayoutException("Converter only supports 29 processors per chunk");
+                throw new UnsupportedLayoutException("Converter only supports 29 processors in total");
             }
         } else {
             throw new UnsupportedLayoutException("Unsupported layout", true);
