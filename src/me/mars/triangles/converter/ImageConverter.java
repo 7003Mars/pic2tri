@@ -46,13 +46,13 @@ public class ImageConverter extends Converter {
     public static void validateLayout(Layout<?> layout) {
         if (layout instanceof LogicDisplayLayout logicDisplayLayout) {
             for (Layout.ImageChunk<LogicDisplayLayout.ChunkData> chunk : logicDisplayLayout.chunks) {
-                if (chunk.data.procs.size >= LogicDisplayLayout.MAX_PROCS) {
-                    throw new UnsupportedLayoutException("Converter only supports 29 processors per chunk");
+                if (chunk.data.procs.size > LogicDisplayLayout.MAX_PROCS) {
+                    throw new UnsupportedLayoutException("Converter only supports" + LogicDisplayLayout.MAX_PROCS +  "processors per chunk");
                 }
             }
         } else if (layout instanceof TiledDisplayLayout tiledDisplayLayout) {
-            if (tiledDisplayLayout.chunks.sum(chunk -> chunk.data.procs) >= LogicDisplayLayout.MAX_PROCS) {
-                throw new UnsupportedLayoutException("Converter only supports 29 processors in total");
+            if (tiledDisplayLayout.chunks.sum(chunk -> chunk.data.procs) > LogicDisplayLayout.MAX_PROCS) {
+                throw new UnsupportedLayoutException("Converter only supports" + LogicDisplayLayout.MAX_PROCS + "processors in total");
             }
         } else {
             throw new UnsupportedLayoutException("Unsupported layout", true);
