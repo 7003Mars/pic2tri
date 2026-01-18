@@ -2,6 +2,7 @@ package me.mars.triangles;
 
 import arc.Core;
 import arc.Events;
+import arc.files.Fi;
 import arc.scene.ui.TextField;
 import arc.scene.ui.layout.Table;
 import arc.util.Log;
@@ -23,6 +24,8 @@ public class PicToTri extends Mod {
 	public static final String pixmapCheck = internalName+"-pixmap-load-fail";
 
 	public static volatile boolean debugMode = false;
+
+	public static Fi genCacheDir = new Fi(Core.files.getCachePath()).child("pic2tri");
 
 	public PicToTri() {
 		Core.settings.defaults(pixmapCheck, false);
