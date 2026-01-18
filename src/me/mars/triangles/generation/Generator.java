@@ -4,11 +4,9 @@ import arc.graphics.Color;
 import arc.graphics.Pixmap;
 import arc.math.Mathf;
 import arc.math.Rand;
-import arc.math.WindowedMean;
 import arc.struct.Seq;
 import arc.util.Log;
 import arc.util.Nullable;
-import arc.util.Time;
 import me.mars.triangles.PicToTri;
 import me.mars.triangles.shapes.FillShape;
 import me.mars.triangles.shapes.Shape;
@@ -95,7 +93,7 @@ public class Generator {
 		image.dispose();
 		this.mutated = new MutateMap(this.original);
         this.prepare(continuation);
-		while (generation.getAndIncrement() < maxGen && this.acc() < targetAcc) {
+		while (generation.incrementAndGet() <= maxGen && this.acc() < targetAcc) {
 			// Stop and cleanup if interrupted
 			if (Thread.currentThread().isInterrupted()) {
 				synchronized (this) {
