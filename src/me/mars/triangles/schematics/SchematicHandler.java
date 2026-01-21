@@ -15,25 +15,34 @@ import mindustry.world.blocks.logic.LogicBlock;
 import static me.mars.triangles.PicToTri.setting;
 
 public class SchematicHandler {
+	// Mindcode src:
+	// eJxlUMFq60AMvPsrpjcHGic9B4NPPfXQQ35gY8uxqLoy3jUhkI+Pdu285FEwazQazQyz2+3wqRPmQLhwHBAHwje3Rz1OjF/tKnyx/0FUOJG87TiM4q4BV53tJtiNQtR1aevRCrfGN2IwwXYoCvLuJNShXpGPqlmhQ1H0Zs5gj31VVY2YV0CnBXASNZ0aZ4oJLXlzMJR7vJV5VTXxOhLqGo3omdvtmgu323L7SnDTmbb/0TY5rSkCrfrIfqakT95CZZvyEfuppyNNLrL6kFT3rxJCbir370hfDgp0k7v0Modhybuii9Szkt5JyM5AtLGJ1t4yXgYWSuCKLrX8i5h/1q29lvYhuCZ6FP3HJ/HvkbGdTw==
 	static final String reloadScript = """
-			print "For use with the PicToTri mod. Link to all the displays you wish to load then click the switch"
-			sensor e switch1 @enabled
-			jump 1 notEqual e 1
-			set i 0
-			getlink b i
-			sensor type b @type
-			jump 10 equal type @logic-display
-			jump 10 equal type @large-logic-display
-			jump 12 equal type @switch
-			jump 13 always 0 0
-			draw clear 0 0 0 0 0 0
-			drawflush b
-			control enabled b 0 0 0 0
-			op add i i 1
-			set t @tick
-			jump 15 equal t @tick
-			jump 4 notEqual i @links
-			""";
+		jump 2 always 0 0
+		print "For use with the PicToTri mod. Link to all the displays you wish to load then click the switch"
+		sensor :enabled switch1 @enabled
+		set :i 0
+		jump 22 greaterThanEq 0 @links
+		getlink :block :i
+		sensor *tmp2 :block @type
+		op equal *tmp3 *tmp2 @logic-display
+		op equal *tmp5 *tmp2 @large-logic-display
+		op or *tmp6 *tmp3 *tmp5
+		jump 20 equal *tmp6 false
+		sensor *tmp9 :block @operations
+		op equal *tmp10 *tmp9 0
+		op or *tmp11 :enabled *tmp10
+		jump 20 equal *tmp11 false
+		draw clear 0 0 0 0 0 0
+		drawflush :block
+		control enabled :block false 0 0 0
+		set :t @tick
+		jump 19 equal :t @tick
+		op add :i :i 1
+		jump 5 lessThan :i @links
+		jump 0 equal :enabled false
+		control enabled switch1 false 0 0 0
+		""";
 
 	public static ImageAnchorBlock anchorBlock;
 	public static LinkAssistBlock microLink, link, hyperLink;
@@ -64,7 +73,7 @@ public class SchematicHandler {
 			logicBuild.links.add(new LogicBlock.LogicLink(0, 0, "switch1", true));
 			Schematic.Stile procTile = new Schematic.Stile(processor, 1+offset, offset,
 					logicBuild.config(), (byte) 0);
-			Schematic schem = new Schematic(Seq.with(button, procTile), StringMap.of("name", "Display loader"),
+			Schematic schem = new Schematic(Seq.with(button, procTile), StringMap.of("name", "Display loader v2"),
 					1+processor.size, processor.size);
 			schem.labels.add(Core.bundle.get(setting("mod-name")));
 			Vars.schematics.add(schem);
