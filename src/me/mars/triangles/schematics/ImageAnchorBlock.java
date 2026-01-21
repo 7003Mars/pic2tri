@@ -24,8 +24,9 @@ public class ImageAnchorBlock extends Block {
 
 	public ImageAnchorBlock() {
 		super(PicToTri.internalName+"-anchor");
+        schematicPriority = -1; // TODO See if this helps on mobile. Wait for pr merge.
 		this.localizedName = "\u2206";
-		this.description = "Not a real block. Used internally by mod";
+		this.description = "Not a real block. Used internally by the pic2tri mod";
 		this.size = 0;
 		this.rotate = true;
 		this.buildVisibility = BuildVisibility.shown;
