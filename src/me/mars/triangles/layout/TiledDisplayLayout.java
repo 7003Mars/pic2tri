@@ -108,7 +108,7 @@ public class TiledDisplayLayout extends Layout<TiledDisplayLayout.ChunkData> {
                 this.chunks.get((this.yChunks-1)*this.xChunks + x).height += sizeY;
             }
         }
-        this.requestProcs(1);
+        this.requestProcs(this.chunks.size);
     }
 
 
