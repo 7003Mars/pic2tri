@@ -36,7 +36,7 @@ public class Options extends Table {
 		});
 		this.add(all);
 		this.row();
-		this.label(() -> "Accuracy:" + Strings.fixed(this.acc.getValue()*100, 1) + "%");
+		this.label(() -> Core.bundle.format(internalName+".accuracy", Strings.fixed(this.acc.getValue()*100, 1)));
 		this.row();
 		this.acc.changed(() -> {
 			if (this.all.isChecked()) {
