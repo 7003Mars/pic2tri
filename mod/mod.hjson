@@ -1,0 +1,27 @@
+#the mod name as displayed in-game
+displayName: "PicToTri"
+
+#the internal name of your mod
+name: "triangles"
+
+#your name
+author: "Mars0x0"
+
+#the fully qualified main class of the mod
+main: "me.mars.triangles.mod.PicToTri"
+
+#the mod description as seen in the mod dialog
+description: "Adds a dialog for turning images into schematics"
+
+#the mod version
+version: REPLACEME
+
+#the minimum game build required to run this mod
+minGameVersion: 154
+
+# dependencies: [maple]
+
+#this is a java mod
+java: true
+
+hidden:true

@@ -1,0 +1,30 @@
+# TODO This TOML was copied from maple ui. I should probably modify it if required
+[versions]
+mindustry = "v154"
+
+kotlin = "2.2.10"
+# TODO My local d8 only supports up to kotlin 2.2 hence we can't use 2.3 yet
+
+redwood = "0.18.0"
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin"}
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+
+redwood-schema = { id = "app.cash.redwood.schema", version.ref = "redwood"}
+redwood-widget = { id = "app.cash.redwood.generator.widget", version.ref = "redwood" }
+redwood-modifiers = { id = "app.cash.redwood.generator.modifiers", version.ref = "redwood" }
+redwood-compose = { id = "app.cash.redwood.generator.compose", version.ref = "redwood" }
+
+
+
+[libraries]
+arc-core = { group = "com.github.Anuken.Arc", name = "arc-core", version.ref = "mindustry" }
+mindustry = { group = "com.github.Anuken.Mindustry", name = "core", version.ref = "mindustry" }
+
+kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin"}
+
+# TODO Redwood uses the 1.9.0 runtime internally. We should see if we can force our mod to compile against 1.10.1(or whatever the latest ver is) without breaking redwood.
+redwood-schema = {group = "app.cash.redwood", name = "redwood-schema", version.ref = "redwood"}
+redwood-compose = {group = "app.cash.redwood", name = "redwood-compose", version.ref = "redwood"}
+redwood-widget = {group = "app.cash.redwood", name = "redwood-widget", version.ref = "redwood"}
