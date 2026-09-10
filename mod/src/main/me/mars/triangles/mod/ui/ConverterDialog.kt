@@ -383,8 +383,7 @@ private fun BoxScope.Content(dialog: ConverterDialog) {
             when (state.stage) {
                 FormStage.SelectFile -> ImageSelectionStep(state.file, dialog::showImagePicker, dialog::updateFileName)
                 FormStage.SelectLayoutType -> LayoutTypeSelectionStep(
-                    state.file!!, dialog::showImagePicker, dialog::updateFileName,
-                    layoutTypes, dialog::setLayoutSelection
+                    layoutTypes, state.layoutType, dialog::setLayoutSelection
                 )
                 FormStage.BuildLayout -> {
                     LayoutBuilderStep(
