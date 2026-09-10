@@ -110,7 +110,8 @@ class ConverterDialog : BaseDialog(bundle("mod-name")) {
     }
 
     fun cancelTask(task: TaskData) {
-        TODO()
+        Vars.ui.showInfo("TODO")
+        // TODO
     }
     // endregion
 
