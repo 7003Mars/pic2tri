@@ -147,8 +147,8 @@ public class TiledDisplayLayout extends Layout<TiledDisplayLayout.ChunkData> {
     public ImageChunk<TiledDisplayLayout.ChunkData> getChunk(int x, int y) {
         // Thanks, gemini!
         int chunkSize = this.chunks.first().width; // TODO Correct yet disgusting way to get the size of normal(non-expanded) chunks
-        int translatedX = x - chunkSize;
-        int translatedY = y - chunkSize;
+        int translatedX = x - procRange;
+        int translatedY = y - procRange;
         int chunkX = translatedX / chunkSize;
         int chunkY = translatedY / chunkSize;
         // If the coordinate is beyond the last standard boundary but still
