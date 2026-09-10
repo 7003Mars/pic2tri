@@ -44,22 +44,6 @@ public class SchematicHandler {
 		control enabled switch1 false 0 0 0
 		""";
 
-	public static ImageAnchorBlock anchorBlock;
-	public static LinkAssistBlock microLink, link, hyperLink;
-
-	public static void create() {
-		Events.on(EventType.ContentInitEvent.class, contentInitEvent -> {
-			anchorBlock = new ImageAnchorBlock();
-			microLink = new LinkAssistBlock((LogicBlock) Blocks.microProcessor);
-			link = new LinkAssistBlock((LogicBlock) Blocks.logicProcessor);
-			hyperLink = new LinkAssistBlock((LogicBlock) Blocks.hyperProcessor);
-
-			// Gotta reload them due to the new blocks
-			Vars.schematics.load();
-		});
-	}
-
-
 	public static void addDefaultSchematics() {
 		Schematic.Stile button = new Schematic.Stile(Blocks.switchBlock, 0, 0 , null, (byte) 0);
 		Block[] processors = {Blocks.microProcessor, Blocks.logicProcessor, Blocks.hyperProcessor};

@@ -34,13 +34,7 @@ public class PicToTri extends Mod {
 			Log.warn("Game crashed while loading image, switching to PixmapIO");
 		}
 		Core.settings.defaults(setting("first-run"), false);
-		Core.settings.defaults(setting("debug-mode"), false);
 		Core.settings.defaults(setting("default-seed"), "");
-		Core.settings.defaults(setting("java-loader"), true);
-		Core.settings.defaults(setting("add-metadata"), true);
-		Core.settings.defaults(setting("link-assist"), true);
-
-		SchematicHandler.create();
 	}
 
 	@Override
@@ -55,8 +49,6 @@ public class PicToTri extends Mod {
 			t.pref(new SeedSetting(setting("default-seed")));
 			t.checkPref(setting("java-loader"), false);
 			t.getSettings().add(new HiddenSetting(setting("first-run")));
-			t.checkPref(setting("add-metadata"), true);
-			t.checkPref(setting("link-assist"), true);
 		});
 
 		BaseDialog converterDialog = new ConverterDialog();
@@ -72,31 +64,6 @@ public class PicToTri extends Mod {
 	public static String bundle(String name) {
 		return "@"+internalName+"." + name;
 	}
-	//region REMOVEME
-//	@Override
-//	public void loadContent() {
-//		super.loadContent();
-//		NewPlanBlock b = new NewPlanBlock("Test");
-//	}
-//
-//	public static class NewPlanBlock extends Wall {
-//
-//		public NewPlanBlock(String name) {
-//			super(name);
-//			requirements(Category.production, ItemStack.with(Items.copper, 1));
-//			buildTime = 240f;
-//			health = 100;
-//			buildVisibility = BuildVisibility.shown;
-//			size = 1;
-//		}
-//
-//		@Override
-//		public void onNewPlan(BuildPlan plan) {
-//			Vars.ui.showInfoFade("onNewPlan() called", 1f);
-//			super.onNewPlan(plan);
-//		}
-//	}
-	//endregion
 }
 
 class SeedSetting extends SettingsMenuDialog.SettingsTable.Setting {

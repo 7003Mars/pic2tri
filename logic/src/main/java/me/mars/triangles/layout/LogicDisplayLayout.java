@@ -189,9 +189,6 @@ public class LogicDisplayLayout extends Layout<LogicDisplayLayout.ChunkData> {
                 schem.tiles.add(procBuilder.getStile());
             }
         }
-        if (Core.settings.getBool(setting("add-metadata"))) {
-            schem.tiles.add(SchematicHandler.anchorBlock.generateStile(procRange, procRange, this.display, this.chunks.map(chunk -> new Point2(chunk.chunkX-procRange, chunk.chunkY-procRange))));
-        }
         return schem;
     }
 
