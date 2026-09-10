@@ -2,6 +2,8 @@ package me.mars.triangles.mod.ui.form
 
 import androidx.compose.runtime.Composable
 import app.cash.redwood.Modifier
+import arc.graphics.Color
+import arc.scene.ui.Label
 import arc.scene.ui.TextButton
 import me.mars.maple.schema.compose.ColumnScope
 import me.mars.maple.ui.Column
@@ -20,9 +22,14 @@ fun ColumnScope.ConverterSelectionStep(
     Column(modifier = Modifier.fill(fillX = true)) {
         Label("Select converter")
         for (option in options) {
-            TextButton(option.displayName, onClick = { onConverterSelected(option) }, buttonStyle = if (option == selected) TextButton.TextButtonStyle(Styles.defaultt).apply { up = over } else Styles.defaultt)
+            TextButton(
+                option.displayName,
+                onClick = { onConverterSelected(option) },
+                buttonStyle = if (option == selected) TextButton.TextButtonStyle(Styles.defaultt).apply { up = over } else Styles.defaultt,
+                modifier = Modifier.fill(true)
+            )
             if (option == selected && validationError != null) {
-                Label(validationError)
+                Label(validationError, labelStyle = Label.LabelStyle(Styles.defaultLabel).apply { fontColor = Color.red })
             }
         }
     }

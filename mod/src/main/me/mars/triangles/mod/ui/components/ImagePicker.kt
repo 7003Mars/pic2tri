@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import app.cash.redwood.Modifier
 import me.mars.maple.schema.compose.ColumnScope
 import me.mars.maple.ui.Column
+import me.mars.maple.ui.Label
 import me.mars.maple.ui.TextButton
 import me.mars.maple.ui.TextField
 import me.mars.triangles.mod.PicToTri.bundle
@@ -19,6 +20,7 @@ fun ColumnScope.ImagePicker(
     Column(modifier = Modifier.fill(fillX = true)) {
         TextButton(bundle("select"), onClick = showFilePicker, modifier = Modifier.fill(fillX = true))
         if (file != null) {
+            Label("Schematic name")
             TextField(file.name, onFileRenamed, modifier = Modifier.fill(fillX = true))
         }
     }
