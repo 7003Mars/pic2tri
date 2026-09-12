@@ -27,7 +27,7 @@ fun ColumnScope.LayoutTypeSelectionStep(
         layoutTypes.forEach {
             Column {
                 Row {
-                    Label(bundle("layout.${it.key.layoutName}"))
+                    Label(bundle("layout.${it.key.layoutName}.name"))
                     ImageButton(Icon.eyeSmall, {}, style = Styles.clearNonei) // TODO Should be the question mark icon, also get descriptions for each layout bundled.
                 }
                 ScrollPane(xScrollingDisabled = false, yScrollingDisabled = true, scrollbarsOnTop = false) {

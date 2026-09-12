@@ -6,6 +6,7 @@ import me.mars.maple.ui.Column
 import me.mars.maple.ui.Label
 import me.mars.maple.ui.Row
 import me.mars.maple.ui.TextButton
+import me.mars.triangles.mod.PicToTri.bundle
 import me.mars.triangles.mod.ui.model.FormStage
 import mindustry.ui.Styles
 
@@ -16,17 +17,17 @@ fun StepDisplay(
     onStageSelected: (FormStage) -> Unit
 ) {
     Column {
-        Label(curStage.name) // TODO bundle
+        Label(bundle("form-stage.${curStage.name}"))
         Row {
             for (stage in FormStage.entries) {
-                val text = stage.ordinal.toString()
+                val stageNum = stage.ordinal.toString()
                 if (stage == curStage) {
                     Column {
-                        TextButton(text, {}, buttonStyle = TextButton.TextButtonStyle(Styles.defaultt).apply {  })
+                        TextButton(stageNum, {}, buttonStyle = TextButton.TextButtonStyle(Styles.defaultt).apply {  })
                         Label("^")
                     }
                 } else {
-                    TextButton(text, { onStageSelected(stage) }, buttonStyle = TextButton.TextButtonStyle(Styles.defaultt).apply {  }, disabled = stage > furthestStage)
+                    TextButton(stageNum, { onStageSelected(stage) }, buttonStyle = TextButton.TextButtonStyle(Styles.defaultt).apply {  }, disabled = stage > furthestStage)
                 }
             }
         }

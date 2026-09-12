@@ -399,7 +399,7 @@ private fun BoxScope.Content(dialog: ConverterDialog) {
                 FormStage.ConfigureConverter -> ConverterEditStep()
             }
             Box(modifier = Modifier.weight(1f)) {  } // TODO Add spacer element to maple
-            TextButton("Next", onClick = {
+            TextButton(bundle("next"), onClick = {
                 if (dialog.validateStep(state)) {
                     dialog.nextStep()
                 }

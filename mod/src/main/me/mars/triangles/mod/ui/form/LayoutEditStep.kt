@@ -1,6 +1,7 @@
 package me.mars.triangles.mod.ui.form
 
 import androidx.compose.runtime.*
+import arc.Core
 import arc.math.geom.Point2
 import me.mars.maple.ui.Column
 import me.mars.maple.ui.Label
@@ -8,6 +9,8 @@ import me.mars.maple.ui.Slider
 import me.mars.triangles.layout.Layout
 import me.mars.triangles.layout.LogicDisplayLayout
 import me.mars.triangles.layout.TiledDisplayLayout
+import me.mars.triangles.mod.PicToTri.bundle
+import me.mars.triangles.utils.Prefs.internalName
 
 @Composable
 fun LayoutEditStep(
@@ -31,11 +34,11 @@ private fun LogicDisplayLayoutEditor(
     val chunkData = remember(coords, refresh) { layout.getChunk(coords.x, coords.y)?.data }
 
     if (chunkData == null) {
-        Label("Select display")
+        Label(bundle("select-display"))
         return
     }
 
-    Label("Procs: ${chunkData.procs.size}")
+    Label(Core.bundle.format("$internalName.layout.logic-display-layout.proc-count", chunkData.procs.size))
     Slider(
         chunkData.procs.size.toFloat(),
         1f, LogicDisplayLayout.MAX_PROCS.toFloat(), 1f,
@@ -54,12 +57,10 @@ private fun TiledDisplayLayoutEditor(
     val chunkData = remember(coords, refresh) { layout.getChunk(coords.x, coords.y)?.data }
 
     if (chunkData == null) {
-        Label("Select display")
+        Label(bundle("select-display"))
     } else {
-        Label("This chunk will have ${chunkData.procs} workers")
+        Label(Core.bundle.format("$internalName.layout.tiled-display-layout.proc-count", chunkData.procs, layout.workerPos.size))
     }
-
-    Label("Total layout procs: ${layout.workerPos.size}")
     Slider(
         layout.workerPos.size.toFloat(),
         1f, LogicDisplayLayout.MAX_PROCS.toFloat()/*We are still limited by the same number of simultaneous draws*/, 1f,

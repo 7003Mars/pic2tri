@@ -20,7 +20,6 @@ fun ColumnScope.ConverterSelectionStep(
     onConverterSelected: (ConverterType) -> Unit,
 ) {
     Column(modifier = Modifier.fill(fillX = true)) {
-        Label("Select converter")
         for (option in options) {
             TextButton(
                 option.displayName,

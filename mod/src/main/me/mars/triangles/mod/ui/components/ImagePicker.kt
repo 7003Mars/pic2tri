@@ -18,9 +18,9 @@ fun ColumnScope.ImagePicker(
     onFileRenamed: (String) -> Unit
 ) {
     Column(modifier = Modifier.fill(fillX = true)) {
-        TextButton(bundle("select"), onClick = showFilePicker, modifier = Modifier.fill(fillX = true))
+        TextButton(bundle("select-image"), onClick = showFilePicker, modifier = Modifier.fill(fillX = true))
         if (file != null) {
-            Label("Schematic name")
+            Label(bundle("name-field"))
             TextField(file.name, onFileRenamed, modifier = Modifier.fill(fillX = true))
         }
     }
