@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import static me.mars.triangles.utils.Prefs.internalName;
 
 public class GifConverter extends Converter {
-    Generator.GenOpts opts = new Generator.GenOpts(0/*TODO Ideally this should be configurable? idk*/, 175, TiledGifLayout.WORKER_MAX_FRAME_SHAPES).maxOut(20).retainPixmap(true); // TODO maxOut should be left to default constructor
+    Generator.GenOpts opts = new Generator.GenOpts(0/*TODO Ideally this should be configurable? idk*/, 175, TiledGifLayout.WORKER_MAX_FRAME_SHAPES).retainPixmap(true);
 
     Seq<Fi> files;
 
