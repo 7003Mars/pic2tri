@@ -1,6 +1,6 @@
 # TODO This TOML was copied from maple ui. I should probably modify it if required
 [versions]
-mindustry = "v154"
+mindustry = "v159"
 
 kotlin = "2.2.10"
 # TODO My local d8 only supports up to kotlin 2.2 hence we can't use 2.3 yet
