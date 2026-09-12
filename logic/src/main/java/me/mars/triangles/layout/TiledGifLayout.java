@@ -85,10 +85,6 @@ public class TiledGifLayout extends TiledDisplayLayout {
             }
         }
         code.appendLine("jump inc lessThan i " + frames*frameInterval);
-        // REMOVEME
-//        code.appendLine("draw clear 255 255 255 0 0 0");
-//        code.appendLine("drawflush display");
-        // END
         code.appendLine("jump first equal reset false");
         return code.toString();
     }
@@ -276,7 +272,6 @@ public class TiledGifLayout extends TiledDisplayLayout {
 
     private static void addWorker(int frameCount, int frameInterval, Seq<Worker> allWorkers, Worker worker) {
         if (worker.nextFreeTick() + Mathf.ceil((float) workerStart.length/2)+1 > worker.frames.first().startTick + frameCount*frameInterval) {
-            // REMOVEME
 //            System.out.println("Worker frame timings:");
 //            for (Frame frame : worker.frames) {
 //                System.out.print(Strings.format("[@->@],", frame.startTick, frame.targetTick));

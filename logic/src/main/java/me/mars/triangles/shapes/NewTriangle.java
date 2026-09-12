@@ -20,7 +20,7 @@ public class NewTriangle extends Triangle{
 			mx += p.x;
 			my += p.y;
 		}
-		// Tomorrow TODO s:
+		// Tomorrow TODOs:
 		// use inverse gradient of vectors for old alg
 		// Figure out coord system: 0,0 has a pixel center at 0.5, 0.5, so why do we need to -1?
 		// What is the relationship between left/right points, the inverse gradient and the allIn check?

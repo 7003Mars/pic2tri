@@ -48,13 +48,6 @@ class ImageGrid : Element() {
             }
 
             override fun clicked(x: Float, y: Float) {
-                /**
-                 *             mouse.sub(this.width / 2f, this.height / 2f)
-                 *             if (PicToTri.debugMode) builder.append(" Raw: ").append(mouse.x.toInt()).append(",").append(mouse.y.toInt())
-                 *             mouse.sub(this.panX * scaledSize / 2f, this.panY * scaledSize / 2f)
-                 *             // TODO: Figure out why this is already scaled down to block size
-                 *             mouse.scl(1f / (scaledSize))
-                 */
                 var x = x
                 var y = y
                 val scl: Float = scaled(this@ImageGrid.zoom)
@@ -140,7 +133,6 @@ class ImageGrid : Element() {
         val iy = layout.imageBounds.y * scaledSize
         val iw = layout.imageBounds.width * scaledSize
         val ih = layout.imageBounds.height * scaledSize
-        // TODO + or - iw/2?
         Draw.rect(this.region, ox + ix + iw/2f, oy + iy + ih/2f, iw, ih)
         // Draw chunks
         Lines.stroke(1f)

@@ -66,7 +66,7 @@ class ConverterDialog : BaseDialog(bundle("mod-name")) {
                     Vars.platform.beginForceLandscape()
                 }
             }
-            return@addListener false // TODO Should it ever be true?
+            return@addListener false
         }
 
         update {
@@ -273,7 +273,7 @@ class ConverterDialog : BaseDialog(bundle("mod-name")) {
             maxSize = Math.min(display.maxDisplayDimensions, maxSize)
         }
         return buildList {
-            val loss = if (display is TileableLogicDisplay) 12/* TileableLogicDisplay#frameSize*2 */ else 0
+            val loss = if (display is TileableLogicDisplay) TiledDisplayLayout.TOTAL_FRAME_SIZE else 0
             for (i in 1 ..(maxSize/display.size)) {
                 val targetDim = i*display.displaySize - loss
                 // Scale to fit width

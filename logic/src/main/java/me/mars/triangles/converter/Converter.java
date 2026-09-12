@@ -41,7 +41,7 @@ public abstract class Converter {
         }
 
         public synchronized void completeChunk(int index, Seq<Shape> chunk) {
-            if (this.chunks.get(index) != null) throw new ArcRuntimeException("Chunk already submitted?"); // TODO Better exception or error message
+            if (this.chunks.get(index) != null) throw new ArcRuntimeException("Chunk already submitted at index " + index);
             this.chunks.set(index, chunk);
             this.completedChunks++;
             if (this.completedChunks >= this.chunks.size) {

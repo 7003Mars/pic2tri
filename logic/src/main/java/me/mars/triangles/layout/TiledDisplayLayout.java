@@ -23,6 +23,8 @@ import java.util.Comparator;
 
 public class TiledDisplayLayout extends Layout<TiledDisplayLayout.ChunkData> {
     public static int DRAW_TRANSLATE_OFFSET = CodeBuilder.MAX_SAFE_COORDINATE/2;
+    /** See {@link TileableLogicDisplay#frameSize}*/
+    public static int TOTAL_FRAME_SIZE = 6*2; // This assumes mod won't override the frameSize field.
 
 
     // Controller
@@ -75,9 +77,9 @@ public class TiledDisplayLayout extends Layout<TiledDisplayLayout.ChunkData> {
     public TiledDisplayLayout(TileableLogicDisplay tiledDisplay, int imageWidth, int imageHeight, int chunkSize) {
         super(tiledDisplay, imageWidth, imageHeight);
         assert tiledDisplay.size == 1; // Other sizes unsupported
-        // TODO IMPT The display actually loses 12px of width and height(check TileableLogicDisplay#draw()), we need to update the image snap size calculations, as well as for this
-        int sizeX = Mathf.ceil((float) (imageWidth+12) /tiledDisplay.displaySize), sizeY = Mathf.ceil((float) (imageHeight+12) /tiledDisplay.displaySize);
-        // ^ We add 12 to calculate the fake width and height before dividing
+        int sizeX = Mathf.ceil((float) (imageWidth+TOTAL_FRAME_SIZE) /tiledDisplay.displaySize);
+        int sizeY = Mathf.ceil((float) (imageHeight+TOTAL_FRAME_SIZE) /tiledDisplay.displaySize);
+        // ^ We add the frame size to calculate the fake width and height before dividing
         this.displayWidth = sizeX;
         this.displayHeight = sizeY;
         // Ensure chunk can't be bigger than the total size of the displays
@@ -85,7 +87,6 @@ public class TiledDisplayLayout extends Layout<TiledDisplayLayout.ChunkData> {
         assert chunkSize != 0; // Prevent getting Infinite xChunks or yChunks
         this.xChunks = Math.max(1, Mathf.floor((float) sizeX/chunkSize));
         this.yChunks = Math.max(1, Mathf.floor((float) sizeY/chunkSize));
-        // TODO We can't have >4 processors drawing simultaneously to the display as its buffer only supports 1024 commands max(256*4)
         this.imageBounds = new Rect(procRange, procRange, ((float) imageWidth/tiledDisplay.displaySize)*tiledDisplay.size, ((float) imageHeight/tiledDisplay.displaySize)*tiledDisplay.size);
         this.width = this.preview.width = sizeX + procRange * 2;
         this.height = this.preview.height = sizeY + procRange * 2;
@@ -146,7 +147,7 @@ public class TiledDisplayLayout extends Layout<TiledDisplayLayout.ChunkData> {
     @Override
     public ImageChunk<TiledDisplayLayout.ChunkData> getChunk(int x, int y) {
         // Thanks, gemini!
-        int chunkSize = this.chunks.first().width; // TODO Correct yet disgusting way to get the size of normal(non-expanded) chunks
+        int chunkSize = this.chunks.first().width; // Correct yet disgusting way to get the size of normal(non-expanded) chunks
         int translatedX = x - procRange;
         int translatedY = y - procRange;
         int chunkX = translatedX / chunkSize;
@@ -223,7 +224,6 @@ public class TiledDisplayLayout extends Layout<TiledDisplayLayout.ChunkData> {
         return points[0];
     }
 
-    // TODO I set this to public for testing, remove later?
     public static Point2 proj(Point2 s1, Point2 s2, Point2 point) {
         v1.set(s2.x - s1.x, s2.y - s1.y);
         float originalLen = v1.len();
