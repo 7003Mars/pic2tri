@@ -8,6 +8,7 @@ import me.mars.triangles.converter.ImageSize
 import me.mars.triangles.mod.PicToTri.bundle
 import me.mars.triangles.mod.ui.components.ValueSlider
 import me.mars.triangles.mod.ui.model.LayoutBlueprint
+import me.mars.triangles.utils.Prefs.internalName
 
 @Composable
 fun LayoutBuilderStep(
@@ -26,7 +27,7 @@ fun LayoutBuilderStep(
 
     Label(bundle("image-scale"))
     ValueSlider(imageSizes, layoutBlueprint.imageSize, onValueChanged = { changeImageSize(it) })
-    Label("${layoutBlueprint.imageSize.width}x${layoutBlueprint.imageSize.height}")
+    Label(Core.bundle.format("${internalName}.layout-size", layoutBlueprint.imageSize.width, layoutBlueprint.imageSize.height))
 
     when (layoutBlueprint) {
         is LayoutBlueprint.LogicDisplayLayoutBlueprint -> {} // No extra options to configure
