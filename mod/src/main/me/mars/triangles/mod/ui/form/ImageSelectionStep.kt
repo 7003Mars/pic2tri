@@ -13,7 +13,7 @@ fun ColumnScope.ImageSelectionStep(
     showFilePicker: () -> Unit,
     onFileRenamed: (String) -> Unit
 ) {
-    Column(modifier = Modifier.fill(fillX = true)) {
+    Column(modifier = Modifier.fill(fillY = false)) {
         ImagePicker(file, showFilePicker, onFileRenamed)
     }
 }

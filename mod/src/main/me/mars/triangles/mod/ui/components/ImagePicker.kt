@@ -17,11 +17,11 @@ fun ColumnScope.ImagePicker(
     showFilePicker: () -> Unit,
     onFileRenamed: (String) -> Unit
 ) {
-    Column(modifier = Modifier.fill(fillX = true)) {
-        TextButton(bundle("select-image"), onClick = showFilePicker, modifier = Modifier.fill(fillX = true))
+    Column(modifier = Modifier.fill(fillY = false)) {
+        TextButton(bundle("select-image"), onClick = showFilePicker, modifier = Modifier.fill(fillY = false))
         if (file != null) {
             Label(bundle("name-field"))
-            TextField(file.name, onFileRenamed, modifier = Modifier.fill(fillX = true))
+            TextField(file.name, onFileRenamed, modifier = Modifier.fill(fillY = false))
         }
     }
 }

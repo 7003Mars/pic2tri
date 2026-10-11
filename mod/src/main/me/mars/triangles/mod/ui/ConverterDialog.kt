@@ -360,50 +360,58 @@ private fun BoxScope.Content(dialog: ConverterDialog) {
     val supportedConverterTypes by dialog.supportedConverterTypes.collectAsState()
     val validationError by dialog.validationError.collectAsState()
 
-    Row(modifier = Modifier.fill(true, true)) {
+    Row(modifier = Modifier.fill()) {
         // Left sidebar
-        Sidebar(
-            activeGenerators, tasks,
-            dialog::exportTask, dialog::cancelTask,
-            modifier = Modifier.fill(true, true)
-        )
+        Column(modifier = Modifier.fill()) {
+            Sidebar(
+                activeGenerators, tasks,
+                dialog::exportTask, dialog::cancelTask,
+                modifier = Modifier.fill()
+            )
+            Box(modifier = Modifier.weight(1f)) {}
+            TextButton("@back", dialog::hide, modifier = Modifier.fill(fillY = false))
+        }
+
         // Grid
         if (state.layout != null) {
             ImageGrid(
                 state.layout!!, state.file!!.pixmap,
                 onSelect = { dialog.coords.value = it },
-                modifier = Modifier.weight(1f).fill(true, true)
+                modifier = Modifier.weight(1f).fill()
             )
         } else {
             Box(modifier = Modifier.weight(1f)) {}
         }
         // Form
-        Column(background = Tex.pane, modifier = Modifier.fill(true, true).sizeIn(minWidth = 350f)) {
-            StepDisplay(state.stage, history.last().stage, dialog::goToStage)
-            when (state.stage) {
-                FormStage.SelectFile -> ImageSelectionStep(state.file, dialog::showImagePicker, dialog::updateFileName)
-                FormStage.SelectLayoutType -> LayoutTypeSelectionStep(
-                    layoutTypes, state.layoutType, dialog::setLayoutSelection
-                )
-                FormStage.BuildLayout -> {
-                    LayoutBuilderStep(
-                        imageSnapSizes, state.layoutBlueprint!!,
-                        dialog::editLayoutBlueprint
+        ScrollPane(xScrollingDisabled = true, yScrollingDisabled = false, scrollbarsOnTop = true, modifier = Modifier.fill()) {
+            Column(background = Tex.pane, modifier = Modifier.fill().sizeIn(minWidth = 350f)) {
+                StepDisplay(state.stage, history.last().stage, dialog::goToStage)
+                when (state.stage) {
+                    FormStage.SelectFile -> ImageSelectionStep(state.file, dialog::showImagePicker, dialog::updateFileName)
+                    FormStage.SelectLayoutType -> LayoutTypeSelectionStep(
+                        layoutTypes, state.layoutType, dialog::setLayoutSelection
                     )
+                    FormStage.BuildLayout -> {
+                        LayoutBuilderStep(
+                            imageSnapSizes, state.layoutBlueprint!!,
+                            dialog::editLayoutBlueprint
+                        )
+                    }
+                    FormStage.EditLayout -> LayoutEditStep(state.layout!!, coords)
+                    FormStage.SelectConverterType -> ConverterSelectionStep(
+                        supportedConverterTypes, state.converterType, validationError,
+                        dialog::setConverterType
+                    )
+                    FormStage.ConfigureConverter -> ConverterEditStep()
                 }
-                FormStage.EditLayout -> LayoutEditStep(state.layout!!, coords)
-                FormStage.SelectConverterType -> ConverterSelectionStep(
-                    supportedConverterTypes, state.converterType, validationError,
-                    dialog::setConverterType
-                )
-                FormStage.ConfigureConverter -> ConverterEditStep()
+                Box(modifier = Modifier.weight(1f)) {  } // TODO Add spacer element to maple
+                TextButton(bundle("next"), onClick = {
+                    if (dialog.validateStep(state)) {
+                        dialog.nextStep()
+                    }
+                }, modifier = Modifier.fill(fillY = false))
             }
-            Box(modifier = Modifier.weight(1f)) {  } // TODO Add spacer element to maple
-            TextButton(bundle("next"), onClick = {
-                if (dialog.validateStep(state)) {
-                    dialog.nextStep()
-                }
-            }, modifier = Modifier.fill(fillX = true))
         }
+
     }
 }

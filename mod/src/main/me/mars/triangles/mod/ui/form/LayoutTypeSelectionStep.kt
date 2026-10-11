@@ -23,7 +23,7 @@ fun ColumnScope.LayoutTypeSelectionStep(
     ) {
     val displayIconRegions = remember { layoutTypes.values.flatten().associateWith { TextureRegionDrawable(it.uiIcon) } }
 
-    Column(modifier = Modifier.fill(true)) {
+    Column(modifier = Modifier.fill(fillY = false)) {
         layoutTypes.forEach {
             Column {
                 Row {

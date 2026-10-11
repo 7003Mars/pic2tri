@@ -19,13 +19,13 @@ fun ColumnScope.ConverterSelectionStep(
     validationError: String?,
     onConverterSelected: (ConverterType) -> Unit,
 ) {
-    Column(modifier = Modifier.fill(fillX = true)) {
+    Column(modifier = Modifier.fill(fillY = false)) {
         for (option in options) {
             TextButton(
                 option.displayName,
                 onClick = { onConverterSelected(option) },
                 buttonStyle = if (option == selected) TextButton.TextButtonStyle(Styles.defaultt).apply { up = over } else Styles.defaultt,
-                modifier = Modifier.fill(true)
+                modifier = Modifier.fill(fillY = false)
             )
             if (option == selected && validationError != null) {
                 Label(validationError, labelStyle = Label.LabelStyle(Styles.defaultLabel).apply { fontColor = Color.red })
