@@ -19,6 +19,7 @@ import me.mars.maple.ui.Box
 import me.mars.maple.ui.Column
 import me.mars.maple.ui.Maple
 import me.mars.maple.ui.Row
+import me.mars.maple.ui.ScrollPane
 import me.mars.maple.ui.TextButton
 import me.mars.triangles.converter.Converter
 import me.mars.triangles.converter.GifConverter
@@ -57,7 +58,6 @@ import mindustry.world.blocks.logic.TileableLogicDisplay
 class ConverterDialog : BaseDialog(bundle("mod-name")) {
     init {
         closeOnBack()
-        addCloseButton()
         addListener {
             if (it is VisibilityEvent) {
                 if (it.isHide) {
