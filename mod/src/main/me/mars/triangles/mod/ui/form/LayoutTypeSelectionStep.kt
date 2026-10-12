@@ -11,6 +11,7 @@ import me.mars.maple.ui.*
 import me.mars.triangles.mod.PicToTri.bundle
 import me.mars.triangles.mod.ui.model.LayoutSelection
 import me.mars.triangles.mod.ui.model.LayoutType
+import mindustry.Vars
 import mindustry.gen.Icon
 import mindustry.ui.Styles
 import mindustry.world.blocks.logic.LogicDisplay
@@ -28,7 +29,9 @@ fun ColumnScope.LayoutTypeSelectionStep(
             Column {
                 Row {
                     Label(bundle("layout.${it.key.layoutName}.name"))
-                    ImageButton(Icon.eyeSmall, {}, style = Styles.clearNonei) // TODO Should be the question mark icon, also get descriptions for each layout bundled.
+                    ImageButton(Icon.infoSmall, {
+                        Vars.ui.showInfo(bundle("layout.${it.key.layoutName}.description"))
+                    }, style = Styles.clearNonei) // TODO Should be the question mark icon, also get descriptions for each layout bundled.
                 }
                 ScrollPane(xScrollingDisabled = false, yScrollingDisabled = true, scrollbarsOnTop = false) {
                     Row {
