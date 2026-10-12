@@ -32,7 +32,7 @@ class ImageGrid : Element() {
     private var region: TextureRegion = TextureRegion(Texture(0, 0))
     var panX: Float = 0f
     var panY: Float = 0f
-    var zoom: Float = 1f
+    var zoom: Float = 3f
 
     init {
         this.addListener(object : DragListener(KeyCode.mouseLeft) {
