@@ -1,15 +1,9 @@
 package me.mars.triangles.mod.ui.components
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import app.cash.redwood.Modifier
 import me.mars.maple.schema.api.Arrangement
 import me.mars.maple.schema.compose.ColumnScope
-import me.mars.maple.schema.compose.RowScope
-import me.mars.maple.schema.modifier.Align
 import me.mars.maple.ui.*
 import me.mars.triangles.converter.ImageGenerationService
 import me.mars.triangles.mod.ui.Styles2
@@ -52,8 +46,8 @@ fun ColumnScope.TaskView(
     var collapsed: Boolean by remember { mutableStateOf(true) }
     val complete = task.completedTasks == task.totalTasks
 
-    Column(background = Tex.pane, modifier = Modifier.padding(5, 5, 5, 5)) {
-        Bar("${task.completedTasks}/${task.totalTasks}", Pal.bar, task.completedTasks.toFloat()/task.totalTasks, modifier = Modifier.sizeIn(150f, 50f).fill(true, true))
+    Column(background = Tex.pane, modifier = Modifier.padding(5, 5, 5, 5).fill()) {
+        Bar("${task.completedTasks}/${task.totalTasks}", Pal.bar, task.completedTasks.toFloat()/task.totalTasks, modifier = Modifier.sizeIn(150f, 50f).fill().padding(5, 5, 5, 5))
         val mod = Modifier.sizeIn(40f, 40f, 40f, 40f)
         Row {
             ImageButton(Icon.exportSmall, onExport, disabled = !complete, modifier = mod)
