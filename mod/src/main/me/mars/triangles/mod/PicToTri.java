@@ -7,7 +7,7 @@ import arc.scene.ui.layout.Table;
 import arc.util.Log;
 import arc.util.OS;
 import me.mars.triangles.mod.ui.ConverterDialog;
-import me.mars.triangles.schematics.SchematicHandler;
+import me.mars.triangles.utils.Prefs;
 import mindustry.Vars;
 import mindustry.game.EventType;
 import mindustry.gen.Icon;
@@ -23,8 +23,6 @@ import static me.mars.triangles.utils.Prefs.setting;
 public class PicToTri extends Mod {
 	public static final String pixmapCheck = internalName+"-pixmap-load-fail";
 
-	public static volatile boolean debugMode = false;
-
 
 	public PicToTri() {
 		Core.settings.defaults(pixmapCheck, false);
@@ -34,7 +32,6 @@ public class PicToTri extends Mod {
 			Log.warn("Game crashed while loading image, switching to PixmapIO");
 		}
 		Core.settings.defaults(setting("first-run"), false);
-		Core.settings.defaults(setting("default-seed"), "");
 	}
 
 	@Override
@@ -45,8 +42,7 @@ public class PicToTri extends Mod {
 			addDefaultSchematics();
 		}
 		Vars.ui.settings.addCategory(bundle("mod-name"), t -> {
-			t.checkPref(setting("debug-mode"), false, changed -> debugMode = changed);
-			t.pref(new SeedSetting(setting("default-seed")));
+			t.checkPref(setting("debug-mode"), false, changed -> Prefs.debugMode = changed);
 			t.checkPref(setting("java-loader"), false);
 			t.getSettings().add(new HiddenSetting(setting("first-run")));
 		});
@@ -56,8 +52,8 @@ public class PicToTri extends Mod {
 		Vars.ui.menufrag.addButton(bundle("convert"), Icon.fileImage, converterDialog::show);
 
 		Events.on(EventType.ClientLoadEvent.class, clientLoadEvent -> {
-			debugMode = Core.settings.getBool(setting("debug-mode"));
-			if (debugMode) converterDialog.show();
+			Prefs.debugMode = Core.settings.getBool(setting("debug-mode"));
+			if (Prefs.debugMode) converterDialog.show();
 		});
 	}
 
