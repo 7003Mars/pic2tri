@@ -50,13 +50,18 @@ val archivesName: String = "pic2tri"
 //    }
 //}
 
+val mindustryDependency = configurations.create("mindustryDependency")
+configurations.named("compileOnly") {
+    extendsFrom(mindustryDependency)
+}
+
 dependencies {
     implementation(project(":logic"))
     implementation(project(":schema:compose"))
     implementation(project(":renderer"))
 
-    compileOnly("com.github.Anuken.Arc:arc-core:$mindustryVersion")
-    compileOnly("com.github.anuken.mindustry:core:$mindustryVersion")
+    mindustryDependency("com.github.Anuken.Arc:arc-core:$mindustryVersion")
+    mindustryDependency("com.github.anuken.mindustry:core:$mindustryVersion")
     compileOnly("me.mars.maple:schema-widget:0.1.0")
     implementation("me.mars.maple:ui:0.1.0")
 
@@ -83,7 +88,7 @@ tasks.register<Exec>("jarAndroid") {
     val d8Path = System.getenv("d8_path") ?: "d8"
     // collect dependencies needed for desugaring
     val dependencies = (
-            configurations.compileClasspath.get().toList() + configurations.runtimeClasspath.get().toList()
+            mindustryDependency.toList()
             ).joinToString(" ") { "--classpath ${it.path}" }
     val libPath = "--lib ${File(platformRoot, "android.jar").path}"
     workingDir(layout.buildDirectory.dir("libs"))
@@ -104,8 +109,8 @@ tasks.shadowJar {
     }
 
     minimize()
-//    relocationPrefix = "pictotri-shadow"
-//    enableAutoRelocation = true
+    relocationPrefix = "pictotri-shadow"
+    enableAutoRelocation = true
 }
 
 tasks.shadeDowngradedApi {
