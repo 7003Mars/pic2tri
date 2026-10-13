@@ -2,10 +2,12 @@ package me.mars.triangles.mod;
 
 import arc.Core;
 import arc.Events;
+import arc.func.Cons;
 import arc.scene.ui.TextField;
 import arc.scene.ui.layout.Table;
 import arc.util.Log;
 import arc.util.OS;
+import me.mars.triangles.converter.GeneratorCache;
 import me.mars.triangles.mod.ui.ConverterDialog;
 import me.mars.triangles.utils.Prefs;
 import mindustry.Vars;
@@ -41,10 +43,28 @@ public class PicToTri extends Mod {
 			Log.info("First run, adding default schems");
 			addDefaultSchematics();
 		}
+		if (Core.settings.getBool(setting("cache.enabled"))) {
+			GeneratorCache.deleteOldCache(Core.settings.getInt(setting("cache.max-age")));
+		}
+
 		Vars.ui.settings.addCategory(bundle("mod-name"), t -> {
 			t.checkPref(setting("debug-mode"), false, changed -> Prefs.debugMode = changed);
 			t.checkPref(setting("java-loader"), false);
 			t.getSettings().add(new HiddenSetting(setting("first-run")));
+			// Cache settings
+			t.checkPref(setting("cache.enabled"), true, changed -> Prefs.cacheEnabled = changed);
+			t.pref(new IntegerSetting(setting("cache.max-age"), 30));
+			t.pref(new FakeSetting(tb -> {
+				tb.button(bundle("cache.clear"), () -> {
+					Vars.ui.showConfirm(bundle("cache.clear"), () -> {
+						GeneratorCache.deleteOldCache(0);
+						Vars.ui.showInfoFade("@done");
+					});
+				});
+				tb.row();
+				tb.button(bundle("cache.open-folder"),() -> Core.app.openFolder(Prefs.genCacheDir.absolutePath()));
+				tb.row();
+			}));
 		});
 
 		BaseDialog converterDialog = new ConverterDialog();
@@ -62,17 +82,22 @@ public class PicToTri extends Mod {
 	}
 }
 
-class SeedSetting extends SettingsMenuDialog.SettingsTable.Setting {
+class IntegerSetting extends SettingsMenuDialog.SettingsTable.Setting {
 
-	public SeedSetting(String name) {
+	public IntegerSetting(String name) {
 		super(name);
+	}
+
+	public IntegerSetting(String name, int def) {
+		this(name);
+		Core.settings.defaults(name, def);
 	}
 
 	@Override
 	public void add(SettingsMenuDialog.SettingsTable table) {
-		TextField field = new TextField(Core.settings.getString(this.name));
+		TextField field = new TextField(Integer.toString(Core.settings.getInt(this.name)));
 		field.setFilter(TextField.TextFieldFilter.digitsOnly);
-		field.changed(() -> Core.settings.put(this.name, field.getText()));
+		field.changed(() -> Core.settings.put(this.name, Integer.parseInt(field.getText())));
 		Table prefTable = table.table().left().padTop(3f).get();
 		prefTable.label(() -> title);
 		prefTable.add(field);
@@ -82,11 +107,24 @@ class SeedSetting extends SettingsMenuDialog.SettingsTable.Setting {
 }
 
 class HiddenSetting extends SettingsMenuDialog.SettingsTable.Setting {
-
 	public HiddenSetting(String name) {
 		super(name);
 	}
 
 	@Override
 	public void add(SettingsMenuDialog.SettingsTable table) {}
+}
+
+class FakeSetting extends SettingsMenuDialog.SettingsTable.Setting {
+	Cons<Table> cons;
+
+	public FakeSetting(Cons<Table> cons) {
+		super("");
+		this.cons = cons;
+	}
+
+	@Override
+	public void add(SettingsMenuDialog.SettingsTable settingsTable) {
+		cons.get(settingsTable);
+	}
 }

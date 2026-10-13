@@ -61,6 +61,7 @@ public class GeneratorCache {
     }
 
     public static void setCache(Generator.GenOpts opts, byte[] imageHash, byte[] continuationHash, Generator.GenerationOutput output) {
+        if (!Prefs.cacheEnabled) return;
         String cacheKey = generateCacheKey(opts, imageHash, continuationHash);
         Fi dir = Prefs.genCacheDir.child(cacheKey.substring(0, 2));
         dir.mkdirs();
@@ -86,6 +87,16 @@ public class GeneratorCache {
                 write.b(generatedImageHash);
                 dir.child(cacheKey+".png").writePng(output.result());
             }
+        }
+    }
+
+    public static void deleteOldCache(int days) {
+        long oldestDate = System.currentTimeMillis() - days * 24L * 60L * 60L * 1000L;
+        Seq<Fi> cacheFiles = Prefs.genCacheDir.findAll((f) -> f.extension().equals("bin") && f.lastModified() < oldestDate);
+        for (Fi cacheFile : cacheFiles) {
+            Fi image = cacheFile.parent().child(cacheFile.nameWithoutExtension() + ".png");
+            image.delete();
+            cacheFile.delete();
         }
     }
 
