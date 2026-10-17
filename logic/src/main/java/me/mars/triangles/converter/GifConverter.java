@@ -3,11 +3,16 @@ package me.mars.triangles.converter;
 import arc.Core;
 import arc.files.Fi;
 import arc.graphics.Pixmap;
+import arc.math.Mathf;
+import arc.struct.BoolSeq;
 import arc.struct.Seq;
+import arc.util.Log;
 import me.mars.triangles.generation.Generator;
+import me.mars.triangles.generation.MutateMap;
 import me.mars.triangles.layout.Layout;
 import me.mars.triangles.layout.TiledGifLayout;
 import me.mars.triangles.utils.PixmapUtils;
+import me.mars.triangles.utils.Prefs;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -15,8 +20,11 @@ import static me.mars.triangles.utils.Prefs.internalName;
 
 public class GifConverter extends Converter {
     Generator.GenOpts opts = new Generator.GenOpts(0/*TODO Ideally this should be configurable? idk*/, 175, TiledGifLayout.WORKER_MAX_FRAME_SHAPES).retainPixmap(true);
+    float colorThresholdPercent = 0.001f;
+    float diffThresholdPercent = 0.2f;
 
     Seq<Fi> files;
+    BoolSeq useContinuationOnly;
 
     public GifConverter(Layout<?> layout, Fi filePath) {
         super(layout, filePath);
@@ -25,6 +33,30 @@ public class GifConverter extends Converter {
         String ext = "." + filePath.extension();
         this.files = Seq.with(dir.list(f -> f.getName().endsWith(ext)));
         files.sortComparing(Fi::nameWithoutExtension);
+
+        useContinuationOnly = new BoolSeq();
+        useContinuationOnly.setSize(files.size);
+        int skips = 0;
+        int colorThreshold = Mathf.round((255 * 255) * 4 * colorThresholdPercent);
+        Pixmap prev = PixmapUtils.loadPixmap(files.get(0));
+        int pixelDiffThreshold = (int) (prev.width * prev.height * diffThresholdPercent);
+        for (int i = 1; i < files.size; i++) {
+            Pixmap cur = PixmapUtils.loadPixmap(files.get(i));
+            int diffPixels = 0;
+            for (int x = 0; x < cur.width; x++) {
+                for (int y = 0; y < cur.height; y++) {
+                    int diff = MutateMap.colorDiff2(cur.get(x, y), prev.get(x, y));
+                    if (diff > colorThreshold) diffPixels++;
+                }
+            }
+            if (diffPixels < pixelDiffThreshold) {
+                useContinuationOnly.set(i, true);
+                skips++;
+            }
+            prev.dispose();
+            prev = cur;
+        }
+        if (Prefs.debugMode) Log.info("@/@ frames will skip generating a fresh frame and only use the continuation", skips, files.size);
     }
 
     public static void validateLayout(Layout<?> layout, Fi path) {
@@ -88,12 +120,13 @@ public class GifConverter extends Converter {
     }
 
     CompletableFuture<Generator.GenerationOutput> processFrame(Pixmap frame, CompletableFuture<Generator.GenerationOutput> prev, int frameNumber) {
-        ImageGenerationService.ImageGenerationTask freshResult = ImageGenerationService.submitImage(opts, frame.copy(), null, frameNumber, this);
-        CompletableFuture<Generator.GenerationOutput> fresh = freshResult.output;
         CompletableFuture<Generator.GenerationOutput> continued = prev.thenCompose(prevOutput -> {
             ImageGenerationService.ImageGenerationTask continuedRes = ImageGenerationService.submitImage(opts, frame, prevOutput.result(), 0, this);
             return continuedRes.output;
         });
+        if (useContinuationOnly.get(frameNumber)) return continued;
+        ImageGenerationService.ImageGenerationTask freshResult = ImageGenerationService.submitImage(opts, frame.copy(), null, frameNumber, this);
+        CompletableFuture<Generator.GenerationOutput> fresh = freshResult.output;
         return fresh.thenCombine(continued, (freshOut, continuedOut) -> {
             if (freshOut.acc() > continuedOut.acc()) {
                 continuedOut.result().dispose();
