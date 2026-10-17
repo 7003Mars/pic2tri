@@ -49,7 +49,7 @@ public class PicToTri extends Mod {
 
 		Vars.ui.settings.addCategory(bundle("mod-name"), t -> {
 			t.checkPref(setting("debug-mode"), false, changed -> Prefs.debugMode = changed);
-			t.checkPref(setting("java-loader"), false);
+			t.checkPref(setting("java-loader"), false, changed -> Prefs.javaPixmapLoader = changed);
 			t.getSettings().add(new HiddenSetting(setting("first-run")));
 			// Cache settings
 			t.checkPref(setting("cache.enabled"), true, changed -> Prefs.cacheEnabled = changed);

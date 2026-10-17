@@ -7,6 +7,7 @@ import arc.struct.Seq;
 import me.mars.triangles.generation.Generator;
 import me.mars.triangles.layout.Layout;
 import me.mars.triangles.layout.TiledGifLayout;
+import me.mars.triangles.utils.PixmapUtils;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -65,7 +66,7 @@ public class GifConverter extends Converter {
         });
         int i = 0;
         for (Fi file : this.files) {
-            Pixmap frame = new Pixmap(file);
+            Pixmap frame = PixmapUtils.loadPixmap(file);
             Pixmap flipped = frame.flipY();
             Pixmap resized = new Pixmap(this.layout.imageWidth, this.layout.imageHeight);
             resized.draw(flipped, 0, 0, resized.width, resized.height, true);

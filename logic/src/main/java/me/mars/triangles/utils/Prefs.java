@@ -11,6 +11,7 @@ public class Prefs {
     }
 
     public static boolean debugMode = false;
+    public static boolean javaPixmapLoader = false;
     public static Fi genCacheDir = new Fi(Core.files.getCachePath()).child("pic2tri");
     public static boolean cacheEnabled = true;
 }

@@ -7,6 +7,7 @@ import me.mars.triangles.generation.Generator;
 import me.mars.triangles.layout.Layout;
 import me.mars.triangles.layout.LogicDisplayLayout;
 import me.mars.triangles.layout.TiledDisplayLayout;
+import me.mars.triangles.utils.PixmapUtils;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -62,7 +63,7 @@ public class ImageConverter extends Converter {
     @Override
     public ConverterTask submit() {
         // Resize and flip pixmap
-        Pixmap origin = new Pixmap(this.filePath);
+        Pixmap origin = PixmapUtils.loadPixmap(this.filePath);
         Pixmap flipped = origin.flipY();
         Pixmap resized = new Pixmap(this.layout.imageWidth, this.layout.imageHeight);
         resized.draw(flipped, 0, 0, resized.width, resized.height, true);

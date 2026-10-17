@@ -4,6 +4,7 @@ import arc.files.Fi;
 import arc.graphics.Pixmap;
 import arc.struct.ObjectMap;
 import kotlin.Pair;
+import me.mars.triangles.utils.PixmapUtils;
 
 import java.util.Objects;
 
@@ -23,7 +24,7 @@ public class ImageSize {
         if (isCached) {
             return cache.get(path).component2();
         }
-        Pixmap pixmap = new Pixmap(file);
+        Pixmap pixmap = PixmapUtils.loadPixmap(file);
         Pair<Long, ImageSize> entry = new Pair<>(file.lastModified(), new ImageSize(pixmap.width, pixmap.height));
         pixmap.dispose();
         cache.put(file.absolutePath(), entry);

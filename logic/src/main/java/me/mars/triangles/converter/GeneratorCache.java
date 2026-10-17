@@ -12,6 +12,7 @@ import arc.util.serialization.SerializationException;
 import me.mars.triangles.generation.Generator;
 import me.mars.triangles.shapes.Shape;
 import me.mars.triangles.shapes.ShapeIO;
+import me.mars.triangles.utils.PixmapUtils;
 import me.mars.triangles.utils.Prefs;
 
 import java.nio.ByteBuffer;
@@ -47,7 +48,7 @@ public class GeneratorCache {
             Pixmap generatedImage = null;
             if (hasImage) {
                 byte[] generatedImageHash = read.b(16);
-                generatedImage = new Pixmap(dir.child(cacheKey+".png"));
+                generatedImage = PixmapUtils.loadPixmap(dir.child(cacheKey+".png"));
                 if (!Arrays.equals(generatedImageHash, imageHash(generatedImage))) {
                     throw new SerializationException(Strings.format("Cached image hash does not match, should be @ but file is @", Arrays.toString(generatedImageHash), Arrays.toString(imageHash(generatedImage))));
                 }

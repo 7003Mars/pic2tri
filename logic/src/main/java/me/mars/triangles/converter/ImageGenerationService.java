@@ -9,11 +9,13 @@ import arc.util.Log;
 import arc.util.Nullable;
 import arc.util.OS;
 import me.mars.triangles.generation.Generator;
+import me.mars.triangles.utils.PixmapUtils;
 import me.mars.triangles.utils.PriorityExecutor;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 
 import static me.mars.triangles.utils.PriorityExecutor.priorityCallable;
 
@@ -77,7 +79,7 @@ public class ImageGenerationService {
         tmpFile.file().deleteOnExit();
         pixmap.dispose();
         return () -> {
-            Pixmap pix = new Pixmap(tmpFile);
+            Pixmap pix = PixmapUtils.loadPixmap(tmpFile);
             assert pix.width == width && pix.height == height;
             return pix;
         };
