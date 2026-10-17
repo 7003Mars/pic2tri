@@ -348,12 +348,13 @@ private fun BoxScope.Content(dialog: ConverterDialog) {
     Row(modifier = Modifier.fill()) {
         // Left sidebar
         Column(modifier = Modifier.fill()) {
-            Sidebar(
-                activeGenerators, tasks,
-                dialog::exportTask, dialog::cancelTask,
-                modifier = Modifier.fill()
-            )
-            Box(modifier = Modifier.weight(1f)) {}
+            ScrollPane(scrollbarsOnTop = true, modifier = Modifier.weight(1f).fill().sizeIn(maxHeight = 100f)) {
+                Sidebar(
+                    activeGenerators, tasks,
+                    dialog::exportTask, dialog::cancelTask,
+                    modifier = Modifier.fill()
+                )
+            }
             TextButton("@back", dialog::hide, modifier = Modifier.fill(fillY = false))
         }
 
